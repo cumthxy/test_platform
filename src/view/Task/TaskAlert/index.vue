@@ -1,0 +1,263 @@
+<template>
+  <div>
+    <el-form
+      ref="alertForm"
+      style="max-width: 600px"
+      :model="ruleForm"
+      :rules="rules"
+      label-width="auto"
+      class="demo-ruleForm"
+      status-icon
+    >
+      <el-form-item label="任务名称" prop="taskName">
+        <el-input v-model="ruleForm.taskName" placeholder="输入任务名称" />
+      </el-form-item>
+      <el-form-item label="客户名称" prop="customerName">
+        <el-input v-model="ruleForm.customerName" placeholder="输入客户名称" />
+      </el-form-item>
+      <el-form-item label="测试接口" prop="filterTemp" class="tableItem">
+        <el-table
+          :data="filterTempValue(this.TemplateData, this.ruleForm.filterTemp)"
+          style="width: 100%; height: 70%"
+          :row-style="{
+            height: '30px',
+          }"
+          border
+        >
+          <el-table-column label="接口名称" align="center" prop="name" />
+        </el-table>
+        <div>
+          <el-button size="small" type="primary" @click="AlertStatus = true"
+            >接口选择</el-button
+          >
+        </div>
+      </el-form-item>
+
+      <el-form-item label="Md5" prop="md5">
+        <el-radio v-model="ruleForm.md5" label="1">是</el-radio>
+        <el-radio v-model="ruleForm.md5" label="2">否</el-radio>
+      </el-form-item>
+      <el-form-item label="上传本地文件" prop="file">
+        <el-upload
+          ref="uploadRef"
+          style="width: 100%"
+          action=""
+          :auto-upload="false"
+          :on-change="fileChange"
+          :on-remove="fileRemove"
+          :limit="1"
+          :on-exceed="handleExceed"
+          :file-list="ruleForm.file"
+        >
+          <el-button type="primary" size="small"
+            >点击上传<el-icon class="el-icon--right"><Upload /></el-icon
+          ></el-button>
+          <template #tip> </template>
+        </el-upload>
+      </el-form-item>
+
+      <div class="footer">
+        <el-button type="primary" size="small" @click="AlertOk">提交</el-button>
+      </div>
+    </el-form>
+    <el-dialog v-model="AlertStatus" width="730" title="选择接口">
+      <Transfer
+        :transfer-data="TemplateData"
+        :transfer-value="ruleForm.filterTemp"
+        @update:left="handleAdd"
+        @update:right="handleRemove"
+        @clear="handleClear"
+      />
+      <div class="footer">
+        <el-button type="primary" size="small" @click="CloseAlertson()"
+          >确定</el-button
+        >
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import { gettestApi, createTask, modifyTask } from "@/api/api.js";
+import Transfer from "../../../components/Transfer/index.vue";
+import { genFileId } from "element-plus";
+export default {
+  props: ["modifyData"],
+  components: {
+    Transfer,
+  },
+  data() {
+    return {
+      ruleForm: {
+        id: null, //修改用
+        taskName: "",
+        customerName: "",
+        file: [],
+        md5: "1",
+        filterTemp: [], //选择后的接口模版
+      },
+      rules: {
+        taskName: [
+          { required: true, message: "请输入任务名称", trigger: "blur" },
+        ],
+        customerName: [
+          { required: true, message: "请输入客户名称", trigger: "blur" },
+        ],
+        filterTemp: [
+          { required: true, message: "请选择接口", trigger: "change" },
+        ],
+        md5: [{ required: true, message: "请选择md5", trigger: "blur" }],
+        file: [{ required: true, message: "请上传文件", trigger: "blur" }],
+      },
+      TemplateData: [], //模板列表（接口）
+      AlertStatus: false,
+    };
+  },
+  methods: {
+    async handleUpload(file) {
+      //限制大小
+      let fileSize = Number(file.file.size / 1024 / 1024);
+      if (fileSize > 5) {
+        this.$msgbox({
+          title: "",
+          message: "文件大小不能超过5MB,请重新上传。",
+          type: "warning",
+        });
+      }
+      const formData = new FormData();
+      try {
+        formData.append("file", file.file);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        this.$refs.upload.clearFiles();
+        this.Uploadstatus = false;
+      }
+      return false; // 这会阻止默认的上传行为
+    },
+    handleExceed(files) {
+      const upload = this.$refs.uploadRef;
+      // 清除文件
+      upload.clearFiles();
+      // 获取第一个文件并生成 ID
+      const file = files[0];
+      file.uid = genFileId();
+      upload.handleStart(file);
+    },
+    fileChange(uploadFile, fileList) {
+      this.ruleForm.file[0]=uploadFile;
+      if (fileList.length !== 0) {
+        this.$refs.alertForm.validateField("file");
+      }
+    },
+    fileRemove(uploadFile, fileList) {
+      if (fileList.length === 0) {
+        this.ruleForm.file = [];
+        this.$refs.alertForm.validateField("file");
+      }
+    },
+
+    // 穿梭框相关
+    handleAdd(key) {
+      if (!this.ruleForm.filterTemp.includes(key)) {
+        this.ruleForm.filterTemp.push(key);
+      }
+    },
+    handleRemove(key) {
+      const index = this.ruleForm.filterTemp.indexOf(key);
+      if (index !== -1) {
+        this.ruleForm.filterTemp.splice(index, 1);
+      }
+    },
+    handleClear() {
+      this.ruleForm.filterTemp = [];
+    },
+    // 根据选择的接口id 选择
+    filterTempValue(templateData, selectTemplateArr) {
+      // 将 selectTemplateArr 转换为普通数组，便于操作
+      const selectedValues = Array.from(selectTemplateArr);
+      // 使用 filter 筛选出符合条件的数据
+      const filteredData = templateData.filter((item) =>
+        selectedValues.includes(item.id)
+      );
+      return filteredData;
+    },
+    // 关闭接口选择后的校验
+    CloseAlertson() {
+      if (this.ruleForm.filterTemp.length >= 1) {
+        this.$refs.alertForm.validateField("filterTemp");
+      } else {
+        this.$refs.alertForm.validateField("filterTemp");
+      }
+
+      this.AlertStatus = false;
+    },
+    // 提交任务
+    AlertOk() {
+      this.$refs.alertForm.validate(async (valid) => {
+        if (valid) {
+          let filterTmplist = this.filterTempValue(
+            this.TemplateData,
+            this.ruleForm.filterTemp
+          ).map((item) => {
+            return { id: item.id, url: item.url };
+          });
+          const formData = new FormData();
+          formData.append("uname", this.ruleForm.customerName); // 客户名称
+          formData.append("task_name", this.ruleForm.taskName); // 任务名称
+          formData.append("test_api_list", JSON.stringify(filterTmplist)); // JSON 格式的接口列表
+          formData.append("is_md5", this.ruleForm.md5); // 任务名称
+          if (this.modifyData) {
+            formData.append("id", this.ruleForm.id); // 修改的id
+            if (this.ruleForm.file[0].raw) {
+              formData.append("file", this.ruleForm.file[0].raw); // 上传的文件
+            }
+            const response = await modifyTask(formData);
+            if (response.re_code == 200) {
+              this.$message.success("成功修改任务");
+              this.$emit("closeAlert");
+            }
+          } else {
+            formData.append("file", this.ruleForm.file[0].raw); // 上传的文件
+            // 创建任务
+            const response = await createTask(formData);
+            if (response.re_code == 200) {
+              this.$message.success("成功创建任务");
+              this.$emit("closeAlert");
+            }
+          }
+        }
+      });
+    },
+  },
+  async mounted() {
+    await gettestApi().then((res) => {
+      if (res.re_code == 200) {
+        this.TemplateData = res.msg;
+      }
+    });
+    // 如果这个窗口为修改窗口
+    if (this.modifyData) {
+      this.ruleForm = {
+        id: this.modifyData.id,
+        taskName: this.modifyData.task_name,
+        customerName: this.modifyData.uname,
+        file: [{ name: this.modifyData.file_name, url: "" }],
+        md5: String(this.modifyData.is_md5),
+        filterTemp: JSON.parse(this.modifyData.test_api_list).map(
+          (item) => item.id
+        ), //选择后的接口模版
+      };
+    }
+  },
+};
+</script>
+
+<style lang="scss" >
+.tableItem {
+  height: 250px;
+  .el-table__cell {
+    padding: 0px !important;
+  }
+}
+</style>
