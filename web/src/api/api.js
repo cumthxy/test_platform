@@ -35,7 +35,7 @@ export function DeltestApi(data) {
     return request.request({
         url: `/test-api`,
         method: 'DELETE',
-        params: {
+        data: {
             id: data.id
         }
     })

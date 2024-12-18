@@ -159,7 +159,7 @@ export default {
 
       DeltestApi({ id: row.id }).then((res) => {
         if (res.re_code == 200) {
-          this.$message.success("成功删除任务");
+          this.$message.success("成功删除接口");
           this.getData();
         }
       });
