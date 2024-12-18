@@ -31,12 +31,6 @@
   .el-input__inner {
     line-height: 1px;
   }
-  // 客服对比度问题 （后续会删除）
-  .el-select__wrapper,
-  .el-input__wrapper {
-    // border: 1px solid black;
-    box-sizing: border-box;
-  }
   .el-table--border .el-table__cell {
     border-right: none;
   }

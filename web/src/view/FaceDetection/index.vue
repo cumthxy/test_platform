@@ -13,7 +13,7 @@
                 @click="dialogVisible = true"
               >
                 <span>+</span>
-                <img src="../../../../public/头像.png" alt="" />
+                <img src="../../../public/头像.png" alt="" />
                 <span>人脸</span>
                 <input
                   id="fileInput"
