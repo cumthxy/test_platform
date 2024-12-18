@@ -26,6 +26,10 @@
               <el-icon><HelpFilled /></el-icon>
               <span>Md5</span>
             </el-menu-item>
+            <el-menu-item index="/layout/FaceDetection">
+              <el-icon><Camera /></el-icon>
+              <span>人脸检测</span>
+            </el-menu-item>
           </div>
         </div>
 
@@ -50,7 +54,7 @@
               {{ item }}
             </el-breadcrumb-item>
           </el-breadcrumb>
-          <el-button @click="Notice = true"
+          <el-button @click="Notice.status = true"
             ><el-icon><Flag /></el-icon>公告</el-button
           >
         </div>

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-row style="margin-top: 20px">
+    <el-row>
       <el-col :span="24">
         <el-card :header="'mx_phone'">
           <el-row :gutter="12">
@@ -78,11 +78,10 @@ export default {
 
   if (res.re_code === 200) {
     const resultMap = {
-      phone: 'mx_phoneResult',
-      ktp: 'id_phoneResult',
+      mx_phone: 'mx_phoneResult',
+      id_phone: 'id_phoneResult',
       id_ktp: 'id_ktpResult',
     };
-
     if (resultMap[type]) {
       this[resultMap[type]] = res.msg; // 动态设置结果
     }

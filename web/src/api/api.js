@@ -1,4 +1,3 @@
-import { id } from "element-plus/es/locales.mjs";
 import request from "../untis/request.js";
 
 export function login(data) {
@@ -8,7 +7,7 @@ export function login(data) {
         data,
     })
 }
-// 获取测试接口列表 /test-api
+// 获取测试接口列表 
 export function gettestApi(data) {
     return request.request({
         url: `/test-api${data ? '/' + data : ''}`,
@@ -31,7 +30,16 @@ export function modifytestApi(data) {
         data,
     })
 }
-
+// 删除接口 
+export function DeltestApi(data) {
+    return request.request({
+        url: `/test-api`,
+        method: 'DELETE',
+        params: {
+            id: data.id
+        }
+    })
+}
 // 解密md5
 export function Md5decode(data) {
     return request.request({
@@ -58,6 +66,12 @@ export function getTasklist(data) {
     return request.request({
         url: `/test-task`,
         method: 'GET',
+        params: {
+            id: data.id,
+            status:data.status,
+            task_name:data.task_name,
+            uname:data.uname
+        }
     })
 }
 // 删除任务
@@ -88,7 +102,12 @@ export function downFile(data) {
         method: 'GET',
         params: {
             id: data.id
-        }
+        },
+        responseType: 'blob' ,
+        headers: {
+            'Cache-Control': 'no-cache'
+          }
+        
     })
 }
 
@@ -98,4 +117,13 @@ export function announcement() {
         url: `/announcement`,
         method: 'GET',
     })
+}
+
+//人脸识别 
+export function ImageAnalyze(data) {
+    return request.request({
+        url: '/image-analyze',
+        method: 'POST',
+        data,
+    });
 }

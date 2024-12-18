@@ -38,6 +38,14 @@ export const staticRoute = [
             breadcrumb:["首页","MD5"]
           },
         },
+        {
+          path: '/layout/FaceDetection',
+          name: 'FaceDetection',
+          component: () => import('../view/FaceDetection/index.vue'),
+          meta:{
+            breadcrumb:["首页","人脸检测"]
+          },
+        },
       ]
     },
     {

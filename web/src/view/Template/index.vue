@@ -69,7 +69,6 @@
                     </div>
                     <template #reference>
                       <div size="small" style="color: red">删除</div>
-                      1
                     </template>
                   </el-popover></el-dropdown-item
                 >
@@ -110,17 +109,28 @@
       </el-form-item>
     </el-form>
     <div class="footer">
-      <el-button type="primary" size="small" @click="AlertOk">提交</el-button>
+      <el-button
+        type="primary"
+        :loading="isThrottled"
+        size="small"
+        @click="AlertOk"
+        >提交</el-button
+      >
     </div>
   </el-dialog>
 </template>
 <script>
 import "@/style/content.min.css";
-import { gettestApi, settestApi,modifytestApi } from "@/api/api.js";
+import {
+  gettestApi,
+  settestApi,
+  modifytestApi,
+  DeltestApi,
+} from "@/api/api.js";
 export default {
   data() {
     return {
-      searchValue:"",
+      searchValue: "",
       tableData: [],
       loading: false,
       TaskStatus: false,
@@ -136,29 +146,47 @@ export default {
         url: [{ required: true, message: "请输入url", trigger: "blur" }],
         rtype: [{ required: true, message: "请选择rtype", trigger: "blur" }],
       },
+      isThrottled: false, //节流阀
     };
   },
   methods: {
     search() {
       console.log(this.searchValue);
-      this.getData(this.searchValue)
-      
+      this.getData(this.searchValue);
     },
     removeData(row) {
       this.$refs[`removeCode${row.date}`].hide();
+
+      DeltestApi({ id: row.id }).then((res) => {
+        if (res.re_code == 200) {
+          this.$message.success("成功删除任务");
+          this.getData();
+        }
+      });
     },
     AlertOk() {
       this.$refs.alertForm.validate((valid) => {
         if (valid) {
+          if (this.isThrottled) {
+            return;
+          }
+          // 设置节流状态为true
+          this.isThrottled = true;
+          // 设置1.5秒后解除节流状态
+          setTimeout(() => {
+            this.isThrottled = false;
+          }, 1500);
+
           if (this.modifyStatus) {
             modifytestApi({
-              id:this.ruleForm.id,
+              id: this.ruleForm.id,
               name: this.ruleForm.name,
               url: this.ruleForm.url,
               rtype: Number(this.ruleForm.rtype),
             }).then((res) => {
               if (res.re_code == 200) {
                 this.$message.success("成功修改接口");
+                this.isThrottled = false;
                 this.getData();
                 this.TaskStatus = false;
               }
@@ -173,6 +201,7 @@ export default {
             }).then((res) => {
               if (res.re_code == 200) {
                 this.$message.success("成功创建接口");
+                this.isThrottled = false;
                 this.getData();
                 this.TaskStatus = false;
               }
@@ -190,7 +219,6 @@ export default {
         this.ruleForm.url = obj.url;
         this.ruleForm.rtype = obj.rtype;
         this.ruleForm.id = obj.id;
-
       } else {
         this.ruleForm = {
           name: "",
@@ -208,18 +236,15 @@ export default {
         if (res) {
           this.tableData = res.msg;
           this.loading = false;
-        }else{
-        this.loading = false;
+        } else {
+          this.loading = false;
         }
-
       } catch (error) {
         this.loading = false;
       }
     },
   },
   mounted() {
-    console.log(1);
-    
     this.getData();
   },
 };

@@ -32,10 +32,20 @@
           >
         </div>
       </el-form-item>
-
+      <el-form-item
+        v-if="
+          Countryjudge(
+            filterTempValue(this.TemplateData, this.ruleForm.filterTemp)
+          )
+        "
+        label="WhatsApp国家码"
+        prop="country"
+      >
+        <el-input v-model="ruleForm.country" placeholder="输入国家码" />
+      </el-form-item>
       <el-form-item label="Md5" prop="md5">
         <el-radio v-model="ruleForm.md5" label="1">是</el-radio>
-        <el-radio v-model="ruleForm.md5" label="2">否</el-radio>
+        <el-radio v-model="ruleForm.md5" label="0">否</el-radio>
       </el-form-item>
       <el-form-item label="上传本地文件" prop="file">
         <el-upload
@@ -57,7 +67,7 @@
       </el-form-item>
 
       <div class="footer">
-        <el-button type="primary" size="small" @click="AlertOk">提交</el-button>
+        <el-button type="primary" size="small"   :loading="isThrottled" @click="AlertOk">提交</el-button>
       </div>
     </el-form>
     <el-dialog v-model="AlertStatus" width="730" title="选择接口">
@@ -69,7 +79,11 @@
         @clear="handleClear"
       />
       <div class="footer">
-        <el-button type="primary" size="small" @click="CloseAlertson()"
+        <el-button
+        
+          type="primary"
+          size="small"
+          @click="CloseAlertson()"
           >确定</el-button
         >
       </div>
@@ -93,6 +107,7 @@ export default {
         taskName: "",
         customerName: "",
         file: [],
+        country: "",
         md5: "1",
         filterTemp: [], //选择后的接口模版
       },
@@ -106,11 +121,13 @@ export default {
         filterTemp: [
           { required: true, message: "请选择接口", trigger: "change" },
         ],
+        country: [{ required: true, message: "请输入国家码", trigger: "blur" }],
         md5: [{ required: true, message: "请选择md5", trigger: "blur" }],
         file: [{ required: true, message: "请上传文件", trigger: "blur" }],
       },
       TemplateData: [], //模板列表（接口）
       AlertStatus: false,
+      isThrottled: false, //节流阀
     };
   },
   methods: {
@@ -145,7 +162,7 @@ export default {
       upload.handleStart(file);
     },
     fileChange(uploadFile, fileList) {
-      this.ruleForm.file[0]=uploadFile;
+      this.ruleForm.file[0] = uploadFile;
       if (fileList.length !== 0) {
         this.$refs.alertForm.validateField("file");
       }
@@ -172,6 +189,15 @@ export default {
     handleClear() {
       this.ruleForm.filterTemp = [];
     },
+
+    Countryjudge(arr) {
+      if (arr.some((item) => item.name.includes("全球WhatsApp"))) {
+        return true;
+      } else {
+        this.ruleForm.country = "";
+        return false;
+      }
+    },
     // 根据选择的接口id 选择
     filterTempValue(templateData, selectTemplateArr) {
       // 将 selectTemplateArr 转换为普通数组，便于操作
@@ -196,17 +222,30 @@ export default {
     AlertOk() {
       this.$refs.alertForm.validate(async (valid) => {
         if (valid) {
+          if (this.isThrottled) {
+            return;
+          }
+          // 设置节流状态为true
+          this.isThrottled = true;
+          // 设置1.5秒后解除节流状态
+          setTimeout(() => {
+            this.isThrottled = false;
+          }, 1500);
+
           let filterTmplist = this.filterTempValue(
             this.TemplateData,
             this.ruleForm.filterTemp
           ).map((item) => {
-            return { id: item.id, url: item.url };
+            return { id: item.id, url: item.url, name: item.name };
           });
           const formData = new FormData();
           formData.append("uname", this.ruleForm.customerName); // 客户名称
           formData.append("task_name", this.ruleForm.taskName); // 任务名称
           formData.append("test_api_list", JSON.stringify(filterTmplist)); // JSON 格式的接口列表
           formData.append("is_md5", this.ruleForm.md5); // 任务名称
+          if (this.ruleForm.country) {
+            formData.append("country", this.ruleForm.country);
+          } // 国家码
           if (this.modifyData) {
             formData.append("id", this.ruleForm.id); // 修改的id
             if (this.ruleForm.file[0].raw) {
@@ -216,6 +255,7 @@ export default {
             if (response.re_code == 200) {
               this.$message.success("成功修改任务");
               this.$emit("closeAlert");
+              this.isThrottled = false;
             }
           } else {
             formData.append("file", this.ruleForm.file[0].raw); // 上传的文件
@@ -223,6 +263,7 @@ export default {
             const response = await createTask(formData);
             if (response.re_code == 200) {
               this.$message.success("成功创建任务");
+              this.isThrottled = false;
               this.$emit("closeAlert");
             }
           }
@@ -243,6 +284,7 @@ export default {
         taskName: this.modifyData.task_name,
         customerName: this.modifyData.uname,
         file: [{ name: this.modifyData.file_name, url: "" }],
+        country: this.modifyData.country,
         md5: String(this.modifyData.is_md5),
         filterTemp: JSON.parse(this.modifyData.test_api_list).map(
           (item) => item.id

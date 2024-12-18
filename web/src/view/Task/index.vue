@@ -54,7 +54,15 @@
       <el-table-column prop="id" label="任务id" align="center" />
       <el-table-column prop="task_name" label="任务名称" align="center" />
       <el-table-column prop="uname" label="客户名称" align="center" />
-      <el-table-column prop="status" label="最新状态" align="center" />
+
+      <el-table-column label="最新状态" align="center">
+        <template #default="scope">
+          <span :class="getStatusClass(scope.row.status)">{{
+            scope.row.status
+          }}</span>
+        </template>
+      </el-table-column>
+
       <el-table-column prop="create_time" label="更新于" align="center" />
       <el-table-column prop="file_name" label="文件名称" align="center" />
       <el-table-column prop="result" label="测试结果" align="center" />
@@ -73,8 +81,6 @@
                   @click="openAlert({ type: 2, data: scope.row })"
                   >修改</el-dropdown-item
                 >
-                <el-dropdown-item>执行</el-dropdown-item>
-
                 <el-dropdown-item>
                   <el-popover
                     placement="top"
@@ -104,7 +110,7 @@
                 >
                 <el-dropdown-item
                   v-if="scope.row.result"
-                  @click="donwLoad(scope.row.id)"
+                  @click="donwLoad(scope.row)"
                   >下载</el-dropdown-item
                 >
               </el-dropdown-menu>
@@ -142,7 +148,7 @@
 <script>
 import "@/style/content.min.css";
 import TaskAlert from "./TaskAlert/index.vue";
-import { getTasklist, DelTasklist, downFile } from "@/api/api";
+import { getTasklist, DelTasklist } from "@/api/api";
 export default {
   components: {
     TaskAlert,
@@ -151,19 +157,23 @@ export default {
     return {
       options: [
         {
-          value: "1",
+          value: "",
+          label: "空",
+        },
+        {
+          value: "待调度",
           label: "待调度",
         },
         {
-          value: "2",
+          value: "执行中",
           label: "执行中",
         },
         {
-          value: "3",
+          value: "成功",
           label: "成功",
         },
         {
-          value: "4",
+          value: "失败",
           label: "失败",
         },
       ],
@@ -189,7 +199,17 @@ export default {
     tableRowClassName({ row }) {
       return row.status === "执行中" ? "" : "noselect"; // 为 name 为 'Tom' 的行添加 'noselect' 类
     },
-    search() {},
+    // 搜索
+    search() {
+      this.getDatalist({
+        id: this.filterData.id,
+        status: this.filterData.status,
+        task_name: this.filterData.taskname,
+        uname: this.filterData.customername,
+        page: this.currentPage,
+        page_size: this.pagesize,
+      });
+    },
     openAlert({ type, data }) {
       this.TaskStatus = true;
       if (type === 1) {
@@ -197,53 +217,89 @@ export default {
       } else {
         // 修改
         this.modifyData = data;
-        console.log(this.modifyData);
       }
     },
     closealert() {
       this.TaskStatus = false;
-      this.getDatalist();
-    },
-    handleCurrentChange(val) {},
-    handleSizeChange(val) {},
-
-    // 下载测试结果文件
-    donwLoad(id) {
-      downFile({ id }).then((res)=>{
-        console.log(res)
-        // const link = document.createElement('a');
-        // link.href = info.filename
-        // link.target = '_blank'; // 如果需要在新标签页打开，可以设置 target
-        // link.setAttribute('download', info.filename || 'downloaded_file'); // 设置文件名（可选）
-        // document.body.appendChild(link);
-        // link.click(); // 模拟点击触发下载
-        // document.body.removeChild(link); // 移除 DOM 节点;
+      this.getDatalist({
+        id: this.filterData.id,
+        status: this.filterData.status,
+        task_name: this.filterData.taskname,
+        uname: this.filterData.customername,
+        page: this.currentPage,
+        page_size: this.pagesize,
       });
+    },
+
+    handleCurrentChange(val) {
+      this.currentPage = val;
+    },
+    // 页数
+    handleSizeChange(val) {
+      this.pagesize = val;
+    },
+    getStatusClass(status) {
+      switch (status) {
+        case "待调度":
+          return "status-pending";
+        case "调度中":
+          return "status-running";
+        case "成功":
+          return "status-success";
+        case "失败":
+          return "status-failed";
+        default:
+          return "";
+      }
+    },
+    // 下载测试结果文件
+    donwLoad(row) {
+      const token = JSON.parse(window.localStorage.getItem("token")); // 获取 Token
+      const fileUrl = `https://data.abckyc.online/v1/test-task/download?id=${row.id}&token=${token}`;
+      // 创建一个 <a> 标签
+      const link = document.createElement("a");
+      link.href = fileUrl; // 设置文件地址
+      link.target = "_blank"; // 如果需要新窗口打开，可以添加这一行
+      link.download = row.result || "downloaded_file.xlsx"; // 设置文件名（可选）
+      // 添加到 DOM 并触发点击事件
+      document.body.appendChild(link);
+      link.click();
+
+      // 移除标签;
+      document.body.removeChild(link);
     },
 
     // 删除任务
     removeData(row) {
-      console.log(row.id);
       DelTasklist({ id: row.id }).then((res) => {
-        console.log(res);
         if (res.re_code == 200) {
           this.$message.success("成功删除任务");
-          this.getDatalist();
+          this.getDatalist({
+            id: this.filterData.id,
+            status: this.filterData.status,
+            task_name: this.filterData.taskname,
+            uname: this.filterData.customername,
+            page: this.currentPage,
+            page_size: this.pagesize,
+          });
         }
       });
 
       this.$refs[`removeCode${row.date}`].hide();
     },
     getDatalist(obj) {
-      getTasklist({ obj }).then((res) => {
+      this.loading = true;
+      getTasklist(obj).then((res) => {
         if (res.re_code == 200) {
-          this.tableData = res.msg;
+          this.tableData = res.msg.data;
+          this.total = res.msg.total;
+          this.loading = false;
         }
       });
     },
   },
   mounted() {
-    this.getDatalist();
+    this.getDatalist({ page: this.currentPage, page_size: this.pagesize });
   },
 };
 </script>
@@ -259,10 +315,30 @@ export default {
   justify-content: center;
   align-items: center;
 }
-// .cell {
-//   cursor: pointer;
-//   display: flex;
-//   align-items: center;
-//   justify-content: center;
-// }
+
+.status-pending,
+.status-running,
+.status-success,
+.status-failed {
+  padding: 0px 10px;
+  border-radius: 3px;
+}
+.status-pending {
+  border: 1px solid #a7bee6;
+  background-color: #e8f0fe;
+}
+.status-running {
+  border: 1px solid #d66f35;
+  background-color: #fcf6d7;
+}
+.status-failed {
+  border: 1px solid #f9dddc;
+  background-color: #fdeeee;
+  color: #ec5d56;
+}
+.status-success {
+  border: 1px solid #5fcb71;
+  color: #5fcb71;
+  background-color: #eaf9f1;
+}
 </style>

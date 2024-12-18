@@ -3,9 +3,7 @@ import axios from "axios"
 import { ElMessage } from 'element-plus';
 import router from '@/router' // 导入router对象
 const request = axios.create({
-    baseURL: `http://172.17.1.77:43817/v1`,
-    // 网络请求多久结束
-    timeout: 30000
+    baseURL: `https://data.abckyc.online/v1`,
 })
 // 请求拦截器
 request.interceptors.request.use((config) => {
@@ -15,8 +13,10 @@ request.interceptors.request.use((config) => {
 
 request.interceptors.response.use(
     (response) => {
-        console.log(response);
-        
+        if (response.config.responseType === 'blob') {
+            console.log(response);
+            return response;
+        }
         if (response.data.re_code == 401) {
             ElMessage.warning(response.data.msg)
         }else if (response.data.re_code == 500){
