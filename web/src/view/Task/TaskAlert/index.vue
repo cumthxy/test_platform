@@ -67,7 +67,13 @@
       </el-form-item>
 
       <div class="footer">
-        <el-button type="primary" size="small"   :loading="isThrottled" @click="AlertOk">提交</el-button>
+        <el-button
+          type="primary"
+          size="small"
+          :loading="isThrottled"
+          @click="AlertOk"
+          >提交</el-button
+        >
       </div>
     </el-form>
     <el-dialog v-model="AlertStatus" width="730" title="选择接口">
@@ -79,11 +85,7 @@
         @clear="handleClear"
       />
       <div class="footer">
-        <el-button
-        
-          type="primary"
-          size="small"
-          @click="CloseAlertson()"
+        <el-button type="primary" size="small" @click="CloseAlertson()"
           >确定</el-button
         >
       </div>
@@ -246,10 +248,14 @@ export default {
           if (this.ruleForm.country) {
             formData.append("country", this.ruleForm.country);
           } // 国家码
+          // 修改
           if (this.modifyData) {
             formData.append("id", this.ruleForm.id); // 修改的id
             if (this.ruleForm.file[0].raw) {
               formData.append("file", this.ruleForm.file[0].raw); // 上传的文件
+              formData.append("file_name", this.ruleForm.file[0].name);
+            }else{
+              formData.append("file_name", this.modifyData.file_name);
             }
             const response = await modifyTask(formData);
             if (response.re_code == 200) {
@@ -258,8 +264,9 @@ export default {
               this.isThrottled = false;
             }
           } else {
-            formData.append("file", this.ruleForm.file[0].raw); // 上传的文件
             // 创建任务
+            formData.append("file", this.ruleForm.file[0].raw); // 上传的文件
+            formData.append("file_name", this.ruleForm.file[0].name);
             const response = await createTask(formData);
             if (response.re_code == 200) {
               this.$message.success("成功创建任务");
