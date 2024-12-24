@@ -7,7 +7,7 @@
           <div class="selectimage">
             <div class="selectimage-imgbox">
               <div
-                v-if="imageurl == null"
+                v-if="!imageurl"
                 id="notReplicable"
                 class="uploadimg"
                 @click="dialogVisible = true"
@@ -26,6 +26,7 @@
               </div>
               <div v-else class="Faceimage">
                 <el-image :src="imageurl" fit="contain"> </el-image>
+                <el-icon @click="imageurl=''"><Delete /></el-icon>
               </div>
             </div>
             <div class="tips">
@@ -54,8 +55,17 @@
             <el-form-item label="Id" prop="id">
               <el-input v-model="ruleForm.id" />
             </el-form-item>
+            <el-form-item label="电话" prop="phone">
+              <el-input v-model="ruleForm.phone" />
+            </el-form-item>
             <el-form-item label="类型" prop="type">
-              <el-input v-model="ruleForm.type" />
+              <el-autocomplete
+               
+                v-model="ruleForm.type"
+                :fetch-suggestions="querySearchType"
+                @select="handleSelect"
+                placeholder="请输入类型关键词"
+              />
             </el-form-item>
             <el-form-item label="Dob" prop="dob">
               <el-input v-model="ruleForm.dob" />
@@ -73,7 +83,6 @@
             size="small"
             type="primary"
             @click="submit"
-            :disabled="imageurl == null"
             :loading="isThrottled"
             >提交</el-button
           >
@@ -104,20 +113,52 @@
 
 <script>
 import "@/style/content.min.css";
-import { ImageAnalyze } from "@/api/api";
+import { ImageAnalyze, getanalyzeType } from "@/api/api";
 export default {
   data() {
     return {
-      imageurl: null,
-      ruleForm: { name: "", id: "", type: "", dob: "", pob: "" },
+      imageurl: "",
+      ruleForm: { name: "", id: "", phone: "", pe: "", dob: "", pob: "" },
       rules: {
         type: [{ required: true, message: "请输入type", trigger: "blur" }],
       },
+      suggestions: [],
       resultData: null,
       isThrottled: false,
     };
   },
   methods: {
+    async querySearchType(queryString, cb) {
+      if (!queryString) {
+        cb([]); // 如果输入为空，返回空数组
+        return;
+      }
+
+      try {
+        const response = await getanalyzeType({ type: queryString });
+        console.log(response);
+
+        if (response?.re_code === 200 && Array.isArray(response.msg)) {
+          this.suggestions = response.msg.map((item) => ({
+            value: item, // 显示的值
+          })); // 存储结果到本地变量
+          console.log(this.suggestions);
+
+          cb(this.suggestions); // 回调设置为搜索结果
+        } else {
+          cb([]); // 如果接口返回异常，返回空数组
+        }
+      } catch (error) {
+        console.error("Error fetching suggestions:", error);
+        cb([]); // 如果请求失败，返回空数组
+      }
+    },
+    // 选择下拉框中的某一项
+    handleSelect(item) {
+      console.log("Selected:", item);
+      this.ruleForm.type = item.value; // 更新输入框的值
+    },
+
     checkFile(e) {
       const _fileObj = e.target.files[0];
       // 尺寸大小报错
@@ -149,6 +190,7 @@ export default {
             img: this.imageurl,
             type: this.ruleForm.type,
             id: this.ruleForm.id,
+            phone: this.ruleForm.phone,
             name: this.ruleForm.name,
             dob: this.ruleForm.dob,
             pob: this.ruleForm.pob,
@@ -163,9 +205,9 @@ export default {
       });
     },
     reset() {
-      this.imageurl = null;
+      this.imageurl = "";
       this.resultData = null;
-      this.ruleForm = { name: "", id: "", type: "", dob: "", pob: "" };
+      this.ruleForm = { name: "", id: "", phone: "", pe: "", dob: "", pob: "" };
     },
   },
 };
@@ -278,13 +320,21 @@ export default {
                   -webkit-user-drag: none;
                 }
               }
+              .el-icon{
+                cursor: pointer;
+                position: absolute;
+                visibility: hidden;
+                color: red;
+                top: 5px;
+                right: 10px;
+              }
             }
 
             .Faceimage:hover {
-              .el-icon-delete {
+              .el-icon{
                 visibility: visible;
-                // z-index: 100;
               }
+            
             }
           }
 

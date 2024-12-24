@@ -4,6 +4,8 @@ import { ElMessage } from 'element-plus';
 import router from '@/router' // 导入router对象
 const request = axios.create({
     baseURL: `https://data.abckyc.online/v1`,
+      // 网络请求多久结束
+      timeout: 30000
 })
 // 请求拦截器
 request.interceptors.request.use((config) => {
@@ -14,7 +16,6 @@ request.interceptors.request.use((config) => {
 request.interceptors.response.use(
     (response) => {
         if (response.config.responseType === 'blob') {
-            console.log(response);
             return response;
         }
         if (response.data.re_code == 401) {

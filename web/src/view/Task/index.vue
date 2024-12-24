@@ -30,7 +30,6 @@
       :data="tableData"
       style="width: 100%"
       :height="'calc(100% - 42px  - 60px)'"
-      :row-class-name="tableRowClassName"
       :header-cell-style="{
         background: '#f5f7f9',
       }"
@@ -39,18 +38,7 @@
       }"
       border
     >
-      <el-table-column width="50" type="expand">
-        <template #default="props">
-          <div class="stepBox">
-            <el-steps :active="1" style="width: 900px" align-center>
-              <el-step title="Step 1" />
-              <el-step title="Step 2" />
-              <el-step title="Step 3" />
-              {{ props.data }}
-            </el-steps>
-          </div>
-        </template>
-      </el-table-column>
+ 
       <el-table-column prop="id" label="任务id" align="center" />
       <el-table-column prop="task_name" label="任务名称" align="center" />
       <el-table-column prop="uname" label="客户名称" align="center" />
@@ -138,10 +126,12 @@
     :close-on-press-escape="true"
     :title="!modifyData ? '新建任务' : '修改任务'"
     v-model="TaskStatus"
+    :show-close="false"
     destroy-on-close
     width="550px"
+    
   >
-    <TaskAlert :modifyData="modifyData" @closeAlert="closealert" />
+    <TaskAlert :modifyData="modifyData" @closeAlert="closealert"  :v-loading="alertLoading"/>
   </el-dialog>
 </template>
 
@@ -190,15 +180,13 @@ export default {
       total: 0,
       adminUser: false,
       loading: false,
+      alertLoading:true,
       TaskStatus: false,
       modifyData: null,
     };
   },
   methods: {
-    // 下拉窗口class类名判断
-    tableRowClassName({ row }) {
-      return row.status === "执行中" ? "" : "noselect"; // 为 name 为 'Tom' 的行添加 'noselect' 类
-    },
+ 
     // 搜索
     search() {
       this.getDatalist({
@@ -305,11 +293,7 @@ export default {
 </script>
 
 <style lang="scss">
-.noselect {
-  .el-table__expand-icon {
-    display: none;
-  }
-}
+
 .stepBox {
   display: flex;
   justify-content: center;

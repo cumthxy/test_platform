@@ -58,6 +58,7 @@ export function createTask(data) {
             'Content-Type': 'multipart/form-data',
         },
         data,
+        timeout: 300000
     });
 }
 
@@ -93,6 +94,7 @@ export function modifyTask(data) {
             'Content-Type': 'multipart/form-data',
         },
         data,
+        timeout: 300000
     })
 }
 // 下载测试结果文件
@@ -126,4 +128,14 @@ export function ImageAnalyze(data) {
         method: 'POST',
         data,
     });
+}
+// 人脸检测type字段检索  
+export function getanalyzeType(data) {
+    return request.request({
+        url: `/image-analyze-type`,
+        method: 'GET',
+        params: {
+            type:data.type
+        }
+    })
 }

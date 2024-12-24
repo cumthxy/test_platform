@@ -72,7 +72,7 @@
           size="small"
           :loading="isThrottled"
           @click="AlertOk"
-          >提交</el-button
+          >{{isThrottled?'提交中...':'提交'}}</el-button
         >
       </div>
     </el-form>
@@ -229,10 +229,6 @@ export default {
           }
           // 设置节流状态为true
           this.isThrottled = true;
-          // 设置1.5秒后解除节流状态
-          setTimeout(() => {
-            this.isThrottled = false;
-          }, 1500);
 
           let filterTmplist = this.filterTempValue(
             this.TemplateData,
@@ -254,24 +250,36 @@ export default {
             if (this.ruleForm.file[0].raw) {
               formData.append("file", this.ruleForm.file[0].raw); // 上传的文件
               formData.append("file_name", this.ruleForm.file[0].name);
-            }else{
+            } else {
               formData.append("file_name", this.modifyData.file_name);
             }
-            const response = await modifyTask(formData);
-            if (response.re_code == 200) {
-              this.$message.success("成功修改任务");
-              this.$emit("closeAlert");
+            try {
+              const response = await modifyTask(formData);
+              if (response && response.re_code == 200) {
+                this.$message.success("成功修改任务");
+                this.$emit("closeAlert");
+                this.isThrottled = false;
+              } else {
+                this.isThrottled = false;
+              }
+            } catch (error) {
               this.isThrottled = false;
             }
           } else {
             // 创建任务
             formData.append("file", this.ruleForm.file[0].raw); // 上传的文件
             formData.append("file_name", this.ruleForm.file[0].name);
-            const response = await createTask(formData);
-            if (response.re_code == 200) {
-              this.$message.success("成功创建任务");
+            try {
+              const response = await createTask(formData);
+              if (response && response.re_code == 200) {
+                this.$message.success("成功创建任务");
+                this.isThrottled = false;
+                this.$emit("closeAlert");
+              } else {
+                this.isThrottled = false;
+              }
+            } catch (error) {
               this.isThrottled = false;
-              this.$emit("closeAlert");
             }
           }
         }
