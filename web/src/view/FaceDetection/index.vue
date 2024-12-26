@@ -52,7 +52,7 @@
             <el-form-item label="姓名" prop="name">
               <el-input v-model="ruleForm.name" />
             </el-form-item>
-            <el-form-item label="Id" prop="id">
+            <el-form-item label="证件号" prop="id">
               <el-input v-model="ruleForm.id" />
             </el-form-item>
             <el-form-item label="电话" prop="phone">
@@ -73,6 +73,10 @@
             <el-form-item label="Pob" prop="pob">
               <el-input v-model="ruleForm.pob" />
             </el-form-item>
+            <el-form-item label="国家码(大写)" prop="country">
+              <el-input v-model="ruleForm.country" />
+            </el-form-item>
+
           </el-form>
         </div>
       </div>
@@ -118,7 +122,7 @@ export default {
   data() {
     return {
       imageurl: "",
-      ruleForm: { name: "", id: "", phone: "", pe: "", dob: "", pob: "" },
+      ruleForm: { name: "", id: "", phone: "", pe: "", dob: "", pob: "" ,country: ""},
       rules: {
         type: [{ required: true, message: "请输入type", trigger: "blur" }],
       },
@@ -194,6 +198,7 @@ export default {
             name: this.ruleForm.name,
             dob: this.ruleForm.dob,
             pob: this.ruleForm.pob,
+            country: this.ruleForm.country,
           }).then((res) => {
             console.log(res);
             if (res.re_code == 200) {
@@ -207,7 +212,7 @@ export default {
     reset() {
       this.imageurl = "";
       this.resultData = null;
-      this.ruleForm = { name: "", id: "", phone: "", pe: "", dob: "", pob: "" };
+      this.ruleForm = { name: "", id: "", phone: "", pe: "", dob: "", pob: "" ,country:""};
     },
   },
 };
