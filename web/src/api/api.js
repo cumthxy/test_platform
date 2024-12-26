@@ -127,6 +127,7 @@ export function ImageAnalyze(data) {
         url: '/image-analyze',
         method: 'POST',
         data,
+        timeout: 300000
     });
 }
 // 人脸检测type字段检索  

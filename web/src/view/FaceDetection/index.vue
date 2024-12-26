@@ -60,7 +60,6 @@
             </el-form-item>
             <el-form-item label="类型" prop="type">
               <el-autocomplete
-               
                 v-model="ruleForm.type"
                 :fetch-suggestions="querySearchType"
                 @select="handleSelect"
@@ -93,9 +92,9 @@
         </div>
       </div>
     </div>
-    <div class="face-result">
+    <div class="face-result"  v-loading="isThrottled">
       <div class="face-title">检测结果</div>
-      <div class="result-textbox" v-if="resultData">
+      <div class="result-textbox" v-if="resultData" >
         <div v-html="resultData"></div>
         <!-- <el-descriptions :border="true" column="1">
           <el-descriptions-item
@@ -158,7 +157,6 @@ export default {
     },
     // 选择下拉框中的某一项
     handleSelect(item) {
-      console.log("Selected:", item);
       this.ruleForm.type = item.value; // 更新输入框的值
       this.ruleForm.api_id = item.api_id; // 更新输入框的值
     },
@@ -186,10 +184,7 @@ export default {
           }
           // 设置节流状态为true
           this.isThrottled = true;
-          // 设置1.5秒后解除节流状态
-          setTimeout(() => {
-            this.isThrottled = false;
-          }, 1500);
+     
           ImageAnalyze({
             img: this.imageurl,
             type: this.ruleForm.type,

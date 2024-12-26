@@ -43,7 +43,7 @@ export const staticRoute = [
           name: 'FaceDetection',
           component: () => import('../view/FaceDetection/index.vue'),
           meta:{
-            breadcrumb:["首页","人脸检测"]
+            breadcrumb:["首页","接口测试"]
           },
         },
       ]
