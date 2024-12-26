@@ -140,13 +140,12 @@ export default {
 
       try {
         const response = await getanalyzeType({ type: queryString });
-        console.log(response);
 
         if (response?.re_code === 200 && Array.isArray(response.msg)) {
           this.suggestions = response.msg.map((item) => ({
-            value: item, // 显示的值
+            value: item.name, // 显示的值
+            api_id:item.api_id
           })); // 存储结果到本地变量
-          console.log(this.suggestions);
 
           cb(this.suggestions); // 回调设置为搜索结果
         } else {
@@ -161,6 +160,7 @@ export default {
     handleSelect(item) {
       console.log("Selected:", item);
       this.ruleForm.type = item.value; // 更新输入框的值
+      this.ruleForm.api_id = item.api_id; // 更新输入框的值
     },
 
     checkFile(e) {
@@ -193,6 +193,7 @@ export default {
           ImageAnalyze({
             img: this.imageurl,
             type: this.ruleForm.type,
+            api_id:this.ruleForm.api_id,
             id: this.ruleForm.id,
             phone: this.ruleForm.phone,
             name: this.ruleForm.name,
