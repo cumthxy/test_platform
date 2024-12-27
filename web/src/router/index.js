@@ -11,7 +11,9 @@ router.beforeEach(async (to, from, next) => {
     next('/login');
     return;
   }
-  
+  if (to.meta.title) { //判断是否有标题
+    document.title = to.meta.title //给相应页面添加标题
+  }
   next()
 });
 export default router

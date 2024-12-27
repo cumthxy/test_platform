@@ -58,5 +58,9 @@ export const staticRoute = [
     path: '/login',
     name: "login",
     component: () => import('../view/login/index.vue'),
+    meta: {
+      title: "登录",
+     
+    },
   },
 ];
