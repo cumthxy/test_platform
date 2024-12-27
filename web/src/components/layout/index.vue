@@ -2,46 +2,40 @@
   <div class="layout">
     <div class="menu">
       <el-menu
-        :default-active="activeMenu"
-        class="el-menu-vertical-demo"
-        :collapse="isCollapse"
-        background-color="#071729"
-        text-color="#fff"
-        active-text-color="#ffd04b"
-        unique-opened
-        :router="true"
-      >
-        <div class="menu-top">
-          <!-- 在这里写导航栏 -->
-          <div class="menubox">
-            <el-menu-item index="/layout/Task">
-              <el-icon><Menu /></el-icon>
-              <span>任务列表</span>
-            </el-menu-item>
-            <el-menu-item index="/layout/Template">
-              <el-icon><Notebook /></el-icon>
-              <span>接口列表</span>
-            </el-menu-item>
-            <el-menu-item index="/layout/Md5">
-              <el-icon><HelpFilled /></el-icon>
-              <span>Md5</span>
-            </el-menu-item>
-            <el-menu-item index="/layout/FaceDetection">
-              <el-icon><Camera /></el-icon>
-              <span>接口测试</span>
-            </el-menu-item>
-          </div>
-        </div>
+    :default-active="activeMenu"
+    class="el-menu-vertical-demo"
+    :collapse="isCollapse"
+    background-color="#071729"
+    text-color="#fff"
+    active-text-color="#ffd04b"
+    unique-opened
+    :router="true"
+  >
+    <div class="menu-top">
+      <!-- 动态生成导航栏 -->
+      <div class="menubox">
+        <el-menu-item
+          v-for="menu in menuRoutes"
+          :key="menu.path"
+          :index="menu.path"
+        >
+          <el-icon>
+            <component :is="menu.meta.icon" />
+          </el-icon>
+          <span>{{ menu.meta.title }}</span>
+        </el-menu-item>
+      </div>
+    </div>
 
-        <div class="btn-box">
-          <div class="toggle-button" @click="isCollapse = !isCollapse">
-            <el-icon>
-              <Right v-if="isCollapse" />
-              <Back v-else
-            /></el-icon>
-          </div>
-        </div>
-      </el-menu>
+    <div class="btn-box">
+      <div class="toggle-button" @click="isCollapse = !isCollapse">
+        <el-icon>
+          <Right v-if="isCollapse" />
+          <Back v-else />
+        </el-icon>
+      </div>
+    </div>
+  </el-menu>
     </div>
     <div class="bigbox">
       <div>
@@ -63,32 +57,43 @@
     </div>
 
     <el-dialog v-model="Notice.status" title="公告" width="500">
-      <div style="min-height: 300px;font-size: 14px;"  v-html="Notice.text">
-
-      </div>
+      <div
+        style="min-height: 300px; font-size: 14px"
+        v-html="Notice.text"
+      ></div>
     </el-dialog>
   </div>
 </template>
   <script >
 import "./layout.min.css";
-import { announcement} from '@/api/api'
+import { staticRoute } from "../../router/staic-route";
+import { announcement } from "@/api/api";
 export default {
   data() {
     return {
       activeMenu: this.$route.path,
       isCollapse: true,
-      Notice:{
-        text:null,
-        status:false,
+      Notice: {
+        text: null,
+        status: false,
       },
-      
+      menuRoutes: [],
     };
   },
   mounted() {
-    this.Notice.status=true
-     announcement().then((res)=>{      
-  this.Notice.text=res.msg.replace(/\n/g, '<br/>')     
-     })
+    const layoutRoute = staticRoute.find((route) => route.path === "/layout");
+    if (layoutRoute && layoutRoute.children) {
+      // 过滤出有 meta.title 的路由作为菜单项
+      this.menuRoutes = layoutRoute.children.filter(
+        (child) => child.meta && child.meta.title
+      );
+    }
+    console.log( this.menuRoutes);
+    
+    this.Notice.status = true;
+    announcement().then((res) => {
+      this.Notice.text = res.msg.replace(/\n/g, "<br/>");
+    });
   },
 };
 </script>
