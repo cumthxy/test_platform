@@ -25,7 +25,7 @@
                 />
               </div>
               <div v-else class="Faceimage">
-                <el-image :src="imageurl" fit="contain"> </el-image>
+                <el-image :src="imageurl" fit="contain" :preview-src-list="ImgList"> </el-image>
                 <el-icon @click="imageurl = ''"><Delete /></el-icon>
               </div>
             </div>
@@ -95,19 +95,9 @@
       <div class="face-title">检测结果</div>
       <div class="result-textbox" v-if="resultData">
         <pre class="preformatted-text">{{ formattedResult }}</pre>
-        <!-- <el-descriptions :border="true" column="1">
-          <el-descriptions-item
-            align="center"
-            v-for="(value, key) in resultData"
-            :key="key"
-            :label="key"
-          >
-            {{ value }}
-          </el-descriptions-item>
-        </el-descriptions> -->
       </div>
       <div v-else>
-        <el-empty :image-size="200" />
+        <el-empty :image-size="130" />
       </div>
     </div>
   </div>
@@ -120,6 +110,7 @@ export default {
   data() {
     return {
       imageurl: "",
+      ImgList: [],
       ruleForm: {
         name: "",
         id: "",
@@ -135,6 +126,7 @@ export default {
       suggestions: [],
       resultData: null,
       isThrottled: false,
+      
     };
   },
   methods: {
@@ -179,6 +171,7 @@ export default {
         reader.readAsDataURL(_fileObj);
         reader.onload = (e) => {
           this.imageurl = e.target.result;
+          this.ImgList[0]=this.imageurl
         };
       }
     },
@@ -425,7 +418,6 @@ export default {
     box-sizing: border-box;
     background-color: #fff;
     box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.12);
-    min-height: 400px;
     .result-textbox {
       padding: 20px !important;
       max-width: 100%; /* 可选：设置容器的最大宽度 */
