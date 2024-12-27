@@ -26,7 +26,7 @@
               </div>
               <div v-else class="Faceimage">
                 <el-image :src="imageurl" fit="contain"> </el-image>
-                <el-icon @click="imageurl=''"><Delete /></el-icon>
+                <el-icon @click="imageurl = ''"><Delete /></el-icon>
               </div>
             </div>
             <div class="tips">
@@ -75,7 +75,6 @@
             <el-form-item label="国家码(大写)" prop="country">
               <el-input v-model="ruleForm.country" />
             </el-form-item>
-
           </el-form>
         </div>
       </div>
@@ -92,10 +91,10 @@
         </div>
       </div>
     </div>
-    <div class="face-result"  v-loading="isThrottled">
+    <div class="face-result" v-loading="isThrottled">
       <div class="face-title">检测结果</div>
-      <div class="result-textbox" v-if="resultData" >
-        <div v-html="resultData"></div>
+      <div class="result-textbox" v-if="resultData">
+        <pre class="preformatted-text">{{ formattedResult }}</pre>
         <!-- <el-descriptions :border="true" column="1">
           <el-descriptions-item
             align="center"
@@ -121,7 +120,15 @@ export default {
   data() {
     return {
       imageurl: "",
-      ruleForm: { name: "", id: "", phone: "", pe: "", dob: "", pob: "" ,country: ""},
+      ruleForm: {
+        name: "",
+        id: "",
+        phone: "",
+        pe: "",
+        dob: "",
+        pob: "",
+        country: "",
+      },
       rules: {
         type: [{ required: true, message: "请输入type", trigger: "blur" }],
       },
@@ -143,7 +150,7 @@ export default {
         if (response?.re_code === 200 && Array.isArray(response.msg)) {
           this.suggestions = response.msg.map((item) => ({
             value: item.name, // 显示的值
-            api_id:item.api_id
+            api_id: item.api_id,
           })); // 存储结果到本地变量
 
           cb(this.suggestions); // 回调设置为搜索结果
@@ -184,11 +191,11 @@ export default {
           }
           // 设置节流状态为true
           this.isThrottled = true;
-     
+
           ImageAnalyze({
             img: this.imageurl,
             type: this.ruleForm.type,
-            api_id:this.ruleForm.api_id,
+            api_id: this.ruleForm.api_id,
             id: this.ruleForm.id,
             phone: this.ruleForm.phone,
             name: this.ruleForm.name,
@@ -208,7 +215,26 @@ export default {
     reset() {
       this.imageurl = "";
       this.resultData = null;
-      this.ruleForm = { name: "", id: "", phone: "", pe: "", dob: "", pob: "" ,country:""};
+      this.ruleForm = {
+        name: "",
+        id: "",
+        phone: "",
+        pe: "",
+        dob: "",
+        pob: "",
+        country: "",
+      };
+    },
+  },
+  computed: {
+    formattedResult() {
+      const data =
+        typeof this.resultData === "string"
+          ? JSON.parse(this.resultData)
+          : this.resultData;
+
+      // 格式化 JSON
+      return data ? JSON.stringify(data, null, 2) : "";
     },
   },
 };
@@ -321,7 +347,7 @@ export default {
                   -webkit-user-drag: none;
                 }
               }
-              .el-icon{
+              .el-icon {
                 cursor: pointer;
                 position: absolute;
                 visibility: hidden;
@@ -332,10 +358,9 @@ export default {
             }
 
             .Faceimage:hover {
-              .el-icon{
+              .el-icon {
                 visibility: visible;
               }
-            
             }
           }
 
@@ -403,6 +428,19 @@ export default {
     min-height: 400px;
     .result-textbox {
       padding: 20px !important;
+      max-width: 100%; /* 可选：设置容器的最大宽度 */
+      word-wrap: break-word; /* 强制内容换行 */
+      white-space: pre-wrap; /* 保留空格和换行符 */
+      .preformatted-text {
+        font-family: monospace; /* 使用等宽字体 */
+        white-space: pre-wrap; /* 保留空格和换行 */
+        word-wrap: break-word; /* 长内容自动换行 */
+        background-color: #f5f5f5; /* 可选：添加代码块的背景色 */
+        padding: 10px; /* 可选：设置内边距 */
+        border-radius: 5px; /* 可选：设置圆角 */
+        border: 1px solid #ddd; /* 可选：设置边框 */
+        overflow-x: auto; /* 可选：允许横向滚动 */
+      }
     }
   }
   #notReplicable {

@@ -28,7 +28,7 @@
             </el-menu-item>
             <el-menu-item index="/layout/FaceDetection">
               <el-icon><Camera /></el-icon>
-              <span>人脸检测</span>
+              <span>接口测试</span>
             </el-menu-item>
           </div>
         </div>
