@@ -38,7 +38,6 @@
       }"
       border
     >
- 
       <el-table-column prop="id" label="任务id" align="center" />
       <el-table-column prop="task_name" label="任务名称" align="center" />
       <el-table-column prop="uname" label="客户名称" align="center" />
@@ -129,9 +128,12 @@
     :show-close="false"
     destroy-on-close
     width="550px"
-    
   >
-    <TaskAlert :modifyData="modifyData" @closeAlert="closealert"  :v-loading="alertLoading"/>
+    <TaskAlert
+      :modifyData="modifyData"
+      @closeAlert="closealert"
+      :v-loading="alertLoading"
+    />
   </el-dialog>
 </template>
 
@@ -180,13 +182,12 @@ export default {
       total: 0,
       adminUser: false,
       loading: false,
-      alertLoading:true,
+      alertLoading: true,
       TaskStatus: false,
       modifyData: null,
     };
   },
   methods: {
- 
     // 搜索
     search() {
       this.getDatalist({
@@ -207,16 +208,19 @@ export default {
         this.modifyData = data;
       }
     },
-    closealert() {
+    closealert(type) {
       this.TaskStatus = false;
-      this.getDatalist({
-        id: this.filterData.id,
-        status: this.filterData.status,
-        task_name: this.filterData.taskname,
-        uname: this.filterData.customername,
-        page: this.currentPage,
-        page_size: this.pagesize,
-      });
+      console.log(type);
+      if (type === 2) {
+        this.getDatalist({
+          id: this.filterData.id,
+          status: this.filterData.status,
+          task_name: this.filterData.taskname,
+          uname: this.filterData.customername,
+          page: this.currentPage,
+          page_size: this.pagesize,
+        });
+      }
     },
 
     handleCurrentChange(val) {
@@ -293,7 +297,6 @@ export default {
 </script>
 
 <style lang="scss">
-
 .stepBox {
   display: flex;
   justify-content: center;

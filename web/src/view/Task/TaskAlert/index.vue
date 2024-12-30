@@ -68,6 +68,13 @@
 
       <div class="footer">
         <el-button
+          :disabled="isThrottled"
+          type="info" 
+          size="small"
+          @click="$emit('closeAlert',1)"
+          >关闭</el-button
+        >
+        <el-button
           type="primary"
           size="small"
           :loading="isThrottled"
@@ -244,6 +251,7 @@ export default {
           if (this.ruleForm.country) {
             formData.append("country", this.ruleForm.country);
           } // 国家码
+
           // 修改
           if (this.modifyData) {
             formData.append("id", this.ruleForm.id); // 修改的id
@@ -257,7 +265,7 @@ export default {
               const response = await modifyTask(formData);
               if (response && response.re_code == 200) {
                 this.$message.success("成功修改任务");
-                this.$emit("closeAlert");
+                this.$emit("closeAlert",2);
                 this.isThrottled = false;
               } else {
                 this.isThrottled = false;
@@ -274,7 +282,7 @@ export default {
               if (response && response.re_code == 200) {
                 this.$message.success("成功创建任务");
                 this.isThrottled = false;
-                this.$emit("closeAlert");
+                this.$emit("closeAlert",2);
               } else {
                 this.isThrottled = false;
               }

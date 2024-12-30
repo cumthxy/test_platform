@@ -88,8 +88,6 @@ export default {
         (child) => child.meta && child.meta.title
       );
     }
-    console.log( this.menuRoutes);
-    
     this.Notice.status = true;
     announcement().then((res) => {
       this.Notice.text = res.msg.replace(/\n/g, "<br/>");
