@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import "@/style/content.min.css";
+
 import { ImageAnalyze, getanalyzeType } from "@/api/api";
 export default {
   data() {

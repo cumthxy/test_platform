@@ -66,6 +66,7 @@
 </template>
   <script >
 import "./layout.min.css";
+import "@/style/content.min.css";
 import { staticRoute } from "../../router/staic-route";
 import { announcement } from "@/api/api";
 export default {

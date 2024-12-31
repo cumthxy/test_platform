@@ -138,7 +138,6 @@
 </template>
 
 <script>
-import "@/style/content.min.css";
 import TaskAlert from "./TaskAlert/index.vue";
 import { getTasklist, DelTasklist } from "@/api/api";
 export default {
@@ -225,10 +224,27 @@ export default {
 
     handleCurrentChange(val) {
       this.currentPage = val;
+      this.getDatalist({
+        id: this.filterData.id,
+        status: this.filterData.status,
+        task_name: this.filterData.taskname,
+        uname: this.filterData.customername,
+        page: val,
+        page_size: this.pagesize,
+      });
     },
     // 页数
     handleSizeChange(val) {
+      this.currentPage=1
       this.pagesize = val;
+      this.getDatalist({
+        id: this.filterData.id,
+        status: this.filterData.status,
+        task_name: this.filterData.taskname,
+        uname: this.filterData.customername,
+        page: this.currentPage,
+        page_size: val,
+      });
     },
     getStatusClass(status) {
       switch (status) {

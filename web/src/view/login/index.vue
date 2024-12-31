@@ -90,9 +90,8 @@ export default {
           if (loginres.re_code == 200) {
             localStorage.setItem("token", JSON.stringify(loginres.token));
           this.$router.push("/layout");
-
           }
-  
+          this.status = false;
 
         } else {
           this.status = false;

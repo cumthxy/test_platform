@@ -51,6 +51,15 @@ export const staticRoute = [
           breadcrumb: ["首页", "接口测试"],
           icon: "Camera", // 图标名称
         },
+      },     {
+        path: '/layout/FacialSecondaryReview',
+        name: 'FacialSecondaryReview',
+        component: () => import('../view/FacialSecondaryReview/index.vue'),
+        meta: {
+          title: "人脸二次确认",
+          breadcrumb: ["首页", "人脸二次确认"],
+          icon: "User", // 图标名称
+        },
       },
     ],
   },

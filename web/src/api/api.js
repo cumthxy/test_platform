@@ -140,3 +140,33 @@ export function getanalyzeType(data) {
         }
     })
 }
+//官方人脸证件接口
+export function getofficeFace(data) {
+    return request.request({
+        url: `/office-face`,
+        method: 'GET',
+        params: {
+            page:data.page,
+            page_size:data.page_size,
+            start_time:data.start_time,
+            end_time:data.end_time,
+            status:data.status
+        }
+    })
+}
+// 官方人脸证件上传
+export function UploadOfficeFace(data) {
+    return request.request({
+        url: '/office-face/upload',
+        method: 'POST',
+        data,
+    });
+}
+// 官方人脸证件删除
+export function DelOfficeFace(data) {
+    return request.request({
+        url: '/office-face/delete',
+        method: 'POST',
+        data,
+    });
+}
