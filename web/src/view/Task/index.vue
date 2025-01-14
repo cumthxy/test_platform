@@ -51,7 +51,35 @@
       </el-table-column>
 
       <el-table-column prop="create_time" label="更新于" align="center" />
-      <el-table-column prop="file_name" label="文件名称" align="center" />
+      <el-table-column prop="file_name" label="文件名称" align="center">
+        <template #default="scope">
+          <el-popover
+            placement="bottom"
+            trigger="click"
+            width="160"
+            :ref="`downFileCode${scope.row.date}`"
+          >
+            <p>确定要下载文件吗</p>
+            <div style="text-align: right; margin: 0">
+              <el-button
+                size="small"
+                text
+                @click="$refs[`downFileCode${scope.row.date}`].hide()"
+                >取消</el-button
+              >
+              <el-button
+                type="primary"
+                size="small"
+                @click="donwLoad(scope.row, 2)"
+                >确定</el-button
+              >
+            </div>
+            <template #reference>
+              <span class="fileName">{{ scope.row.file_name }}</span>
+            </template>
+          </el-popover>
+        </template>
+      </el-table-column>
       <el-table-column prop="result" label="测试结果" align="center" />
       <el-table-column label="操作" align="center">
         <template #default="scope">
@@ -97,7 +125,7 @@
                 >
                 <el-dropdown-item
                   v-if="scope.row.result"
-                  @click="donwLoad(scope.row)"
+                  @click="donwLoad(scope.row, 1)"
                   >下载</el-dropdown-item
                 >
               </el-dropdown-menu>
@@ -235,7 +263,7 @@ export default {
     },
     // 页数
     handleSizeChange(val) {
-      this.currentPage=1
+      this.currentPage = 1;
       this.pagesize = val;
       this.getDatalist({
         id: this.filterData.id,
@@ -260,10 +288,16 @@ export default {
           return "";
       }
     },
-    // 下载测试结果文件
-    donwLoad(row) {
+    // 下载文件
+    donwLoad(row, code) {
       const token = JSON.parse(window.localStorage.getItem("token")); // 获取 Token
-      const fileUrl = `https://data.abckyc.online/v1/test-task/download?id=${row.id}&token=${token}`;
+      let fileUrl;
+      if (code === 1) { //1是下载测试结果
+        fileUrl = `https://data.abckyc.online/v1/test-task/download?id=${row.id}&token=${token}`;
+      } else if (code === 2) {//2是下载文件
+        fileUrl = `https://data.abckyc.online/v1/test-task/download-data?id=${row.id}&token=${token}`;
+        this.$refs[`downFileCode${row.date}`].hide();
+      }
       // 创建一个 <a> 标签
       const link = document.createElement("a");
       link.href = fileUrl; // 设置文件地址
@@ -272,10 +306,10 @@ export default {
       // 添加到 DOM 并触发点击事件
       document.body.appendChild(link);
       link.click();
-
       // 移除标签;
       document.body.removeChild(link);
     },
+    // 下载文件
 
     // 删除任务
     removeData(row) {
@@ -313,6 +347,10 @@ export default {
 </script>
 
 <style lang="scss">
+.fileName {
+  cursor: pointer;
+  color: #609efa;
+}
 .stepBox {
   display: flex;
   justify-content: center;

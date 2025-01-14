@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 
 export default defineConfig(({ mode }) => {
+  
   // 使用 loadEnv 加载 .env 文件
   const env = loadEnv(mode, process.cwd());
 

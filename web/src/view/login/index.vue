@@ -8,7 +8,7 @@
       ref="ruleForm"
       class="login-container"
     >
-      <h1 class="title">User Login</h1>
+      <h1 class="title">测试评估平台</h1>
       <el-form-item prop="username">
         <el-input
           type="text"

@@ -10,7 +10,6 @@
                 v-if="!imageurl"
                 id="notReplicable"
                 class="uploadimg"
-                @click="dialogVisible = true"
               >
                 <span>+</span>
                 <img src="../../../public/头像.png" alt="" />

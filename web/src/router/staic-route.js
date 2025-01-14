@@ -52,15 +52,47 @@ export const staticRoute = [
           icon: "Camera", // 图标名称
         },
       },     {
-        path: '/layout/FacialSecondaryReview',
-        name: 'FacialSecondaryReview',
-        component: () => import('../view/FacialSecondaryReview/index.vue'),
+        path: '/layout/Office-face',
+        name: 'Office-face',
+        component: () => import('../view/office-face/index.vue'),
         meta: {
-          title: "人脸二次确认",
-          breadcrumb: ["首页", "人脸二次确认"],
+          title: "Office face",
+          breadcrumb: ["Home", "Office face"],
+          icon: "Document", // 图标名称
+        },
+      },
+      {
+        path: '/layout/FakeFaceConfirm',
+        name: 'Fake_face_confirm',
+        component: () => import('../view/FakeFaceConfirm/index.vue'),
+        meta: {
+          title: "Fake_face_confirm",
+          breadcrumb: ["Home", "Fake_face_confirm"],
           icon: "User", // 图标名称
         },
       },
+      
+      {
+        path: '/layout/FaceCard',
+        name: 'FaceCard',
+        component: () => import('../view/FakeCard/index.vue'),
+        meta: {
+          title: "Fake_card_confirm",
+          breadcrumb: ["Home", "Fake_card_confirm"],
+          icon: "Postcard", // 图标名称
+        },
+      },
+      // {
+      //   path: '/layout/faceOcr',
+      //   name: 'faceOcr',
+      //   component: () => import('../view/faceOcr/index.vue'),
+      //   meta: {
+      //     title: "风险人脸",
+      //     breadcrumb: ["首页", "风险人脸搜索"],
+      //     icon: "VideoCamera", // 图标名称
+      //   },
+      // },
+   
     ],
   },
   {

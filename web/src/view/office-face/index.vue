@@ -5,12 +5,12 @@
         <el-date-picker
           v-model="filterData.time"
           type="daterange"
-          range-separator="至"
-          start-placeholder="开始时间"
-          end-placeholder="结束时间"
+          range-separator="-"
+          start-placeholder="Start Time"
+          end-placeholder="End Time"
         />
         <el-select
-          placeholder="状态"
+          placeholder="Status"
           style="width: 240px"
           v-model="filterData.status"
         >
@@ -22,17 +22,34 @@
           />
         </el-select>
 
-        <el-button @click="search">搜索</el-button>
+        <el-button @click="search">Search</el-button>
+        <span class="tip">Delete blur, fake, no_face, fake_face</span>
+      </div>
+      <div class="contentbodybox-top-r">
+        <el-checkbox
+          label="Check All"
+          size="large"
+          v-model="checkAll"
+          :indeterminate="isIndeterminate"
+          @change="CheckAllChange"
+        />
+        <el-button @click="uploadAll">Upload</el-button>
       </div>
     </div>
     <div class="facebox" v-loading="loading">
-      <ul class="imglist" v-if="list.length>0">
-        <li v-for="item in list" :key="item.id" class="infoBox">
+      <ul class="imglist" v-if="list.length > 0">
+        <li v-for="(item, index) in list" :key="item.id" class="infoBox">
+          <el-checkbox
+            v-if="item.status != 'upload'"
+            v-model="item.checkStatus"
+            size="large"
+          />
+          <div v-else style="height: 20px"></div>
           <div class="infoTextBox">
             <div class="info-l">
-              <span>创建时间</span>
+              <span>CreateTime</span>
               <span>NIK</span>
-              <span>状态</span>
+              <span>Status</span>
             </div>
             <div class="info-r">
               <span>{{ item.create_time }}</span>
@@ -46,15 +63,20 @@
               v-if="item.image_url == ''"
               src="../../../public/头像.png"
             />
-            <img alt="" v-else :src="item.image_url" />
+            <img
+              alt=""
+              v-else
+              :src="item.image_url"
+              @click="openPreview(index)"
+            />
           </div>
           <div class="buttonBox" v-if="item.status != 'upload'">
             <el-button
-              type="primary"
+              type="primary"  
               plain
               size="small"
               @click="Openupload(item)"
-              >上传</el-button
+              >Upload</el-button
             >
             <el-button
               type="danger"
@@ -62,14 +84,13 @@
               size="small"
               v-if="item.status != 'delete'"
               @click="Opendelete(item)"
-              >删除</el-button
+              >Delete</el-button
             >
           </div>
         </li>
       </ul>
-      
-        <el-empty   :image-size="200"  v-else />
 
+      <el-empty :image-size="200" v-else />
     </div>
     <div class="Pagination-box">
       <el-pagination
@@ -83,17 +104,12 @@
       >
       </el-pagination>
     </div>
-    <el-dialog
-      v-model="UploadAlertStatus"
-      title="上传提醒"
-      width="400"
-      :before-close="handleClose"
-    >
-      <span>确定上传吗</span>
+    <el-dialog v-model="UploadAlertStatus" title="Upload Tips" width="400">
+      <span>Are you sure to upload?</span>
       <template #footer>
         <div class="dialog-footer">
           <el-button size="small" @click="UploadAlertStatus = false"
-            >取消</el-button
+            >No</el-button
           >
           <el-button
             size="small"
@@ -101,43 +117,27 @@
             :loading="buttonLoad"
             @click="Upload"
           >
-            确定
+            Yes
           </el-button>
         </div>
       </template>
     </el-dialog>
-    <el-dialog v-model="DelAlertStatus" title="删除提醒" width="400">
-      <span>确定删除吗</span>
+    <el-dialog v-model="DelAlertStatus" title="Delete Tips" width="400">
+      <span>Are you sure to delete?</span>
       <template #footer>
         <div class="dialog-footer">
-          <el-button size="small" @click="DelAlertStatus = false"
-            >取消</el-button
-          >
+          <el-button size="small" @click="DelAlertStatus = false">No</el-button>
           <el-button
             size="small"
             type="primary"
             :loading="buttonLoad"
             @click="DelData"
           >
-            确定
+            Yes
           </el-button>
         </div>
       </template>
     </el-dialog>
-
-    <el-image-viewer
-    v-if="visible"
-    :url-list="urlList"
-    :initial-index="0"
-    @close="visible = false"
-    class="viewerbox"
-  >
-    <!--定位-->
-    <div class="viewerPostion">
-      <button @click="downloadImage">上传</button>
-      <button @click="shareImage">删除</button>
-    </div>
-  </el-image-viewer>
   </div>
 </template>
 
@@ -146,14 +146,10 @@ import { getofficeFace, UploadOfficeFace, DelOfficeFace } from "@/api/api.js";
 export default {
   data() {
     return {
-      visible: false,
-      urlList: [
-        '../../../public/测试人脸.jpg',
-        '../../../public/测试证件.jpg'
-      ],
+      currentIndex: 0,
       filterData: {
         time: [],
-        status: "",
+        status: "pending",
       },
       list: [],
       //分页，
@@ -169,57 +165,141 @@ export default {
       UploadAlertStatus: false,
       DelAlertStatus: false,
       buttonLoad: false,
-      AlertData: {}, //用于弹窗后的确定传参
+      AlertDataArr: {}, //用于弹窗后的确定传参
+      checkAll: false,
+      isIndeterminate: false,
     };
   },
+  watch: {
+    list: {
+      handler(newList) {
+        // 拥有 checkStatus 属性的项数量
+        const totalWithCheckStatus = newList.filter(
+          (item) => "checkStatus" in item
+        ).length;
+        // checkStatus 为 true 的项数量
+        const checkedCount = newList.filter(
+          (item) => item.checkStatus === true
+        ).length;
+        // 判断 isIndeterminate 的状态
+        if (totalWithCheckStatus === 0 || checkedCount === 0) {
+          // 如果没有 checkStatus 属性，或者所有 checkStatus 为 false
+          this.isIndeterminate = false;
+        } else {
+          // 其他情况下，判断是否部分选中
+          this.isIndeterminate = checkedCount !== totalWithCheckStatus;
+        }
+      },
+      deep: true, // 深度监听，确保能够监听到对象内部的变化
+    },
+  },
   methods: {
-    // 删除
-    Openupload(item) {
-      this.AlertData = item;
+    openPreview(index) {
+      let urlList = this.list.map((item, index) => {
+        return item.image_url; // 添加唯一标识
+      });
+      this.$hevueImgPreview({
+        multiple: true,
+        nowImgIndex: index,
+        imgList: urlList,
+        dataList: this.list,
+        onupload: (data) => {
+          this.Openupload(data.dataUrl);
+        },
+        ondelete: (data) => {
+          this.Opendelete(data.dataUrl);
+        },
+      });
+    },
+
+    closePreview() {
+      this.$store.commit("SET_VISIBLE", false);
+    },
+    // 多选上传
+    uploadAll() {
+      let filterArr = this.list.filter((item) => item.checkStatus === true);
+      this.Openupload(filterArr);
+    },
+    // 多选按钮
+    CheckAllChange(val) {
+      this.list.forEach((item) => {
+        if ("checkStatus" in item) {
+          // 判断是否有 checkStatus 属性
+          item.checkStatus = val ? true : false; // 根据 val 设置 checkStatus 的值
+        }
+      });
+    },
+    // 上传
+    Openupload(data) {
+      if (Array.isArray(data)) {
+        this.AlertDataArr = data; // 如果是数组，直接赋值
+      } else {
+        this.AlertDataArr = [data]; // 如果不是数组，将其包装成数组
+      }
       this.UploadAlertStatus = true;
     },
-    Opendelete(item) {
-      this.AlertData = item;
+    //删除
+    Opendelete(data) {
+      if (Array.isArray(data)) {
+        this.AlertDataArr = data; // 如果是数组，直接赋值
+      } else {
+        this.AlertDataArr = [data]; // 如果不是数组，将其包装成数组
+      }
       this.DelAlertStatus = true;
     },
     Upload() {
       this.buttonLoad = true;
-      UploadOfficeFace({
-        image_id: this.AlertData.image_id,
-        image_md5: this.AlertData.image_md5,
-        nik: this.AlertData.nik,
-      }).then((res) => {
-        console.log(res);
-        if (res.re_code == 200) {
-          this.$message.success(res.msg);
-          // 根据image_id在list中筛选 找到之后将这条数据在list中删除
-          const index = this.list.findIndex(
-            (item) => item.image_id === this.AlertData.image_id
-          );
-          if (index !== -1) {
-            this.list.splice(index, 1);
-          }
-          this.UploadAlertStatus = false;
-          this.buttonLoad = false;
-        }
+      let arr = this.AlertDataArr.map((item) => {
+        return {
+          image_id: item.image_id,
+          image_md5: item.image_md5,
+          nik: item.nik,
+        };
       });
+
+      UploadOfficeFace({
+        bacth_list: arr,
+      })
+        .then((res) => {
+          if (res.re_code == 200) {
+            this.$message.success(res.msg);
+            // 遍历 arr，逐个删除 this.list 中对应的项
+            arr.forEach((item) => {
+              const index = this.list.findIndex(
+                (listItem) => listItem.image_id === item.image_id
+              );
+              if (index !== -1) {
+                this.list.splice(index, 1);
+              }
+            });
+
+            this.UploadAlertStatus = false;
+            this.buttonLoad = false;
+            this.closePreview();
+          }
+        })
+        .catch((err) => {
+          console.error("上传出错：", err);
+          this.$message.error("上传出错，请稍后重试！");
+          this.buttonLoad = false;
+        });
     },
     DelData() {
       this.buttonLoad = true;
       DelOfficeFace({
-        image_id: this.AlertData.image_id,
-        image_md5: this.AlertData.image_md5,
-        nik: this.AlertData.nik,
+        image_id: this.AlertDataArr[0].image_id,
+        image_md5: this.AlertDataArr[0].image_md5,
+        nik: this.AlertDataArr[0].nik,
       }).then((res) => {
-        console.log(res);
         if (res.re_code == 200) {
           this.$message.success(res.msg);
           const index = this.list.findIndex(
-            (item) => item.image_id === this.AlertData.image_id
+            (item) => item.image_id === this.AlertDataArr[0].image_id
           );
           if (index !== -1) {
             this.list.splice(index, 1);
           }
+          this.closePreview();
           this.DelAlertStatus = false;
           this.buttonLoad = false;
         }
@@ -257,13 +337,27 @@ export default {
       const day = String(date.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     },
-    getTodayRange() {
+    getFirstThreeDays() {
       const today = new Date();
+
+      // 获取今天的日期
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, "0");
       const day = String(today.getDate()).padStart(2, "0");
       const todayString = `${year}-${month}-${day}`;
-      return [todayString, todayString]; // 返回 [开始时间, 结束时间]
+
+      // 获取前三天的日期
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(today.getDate() - 3); // 设置为前三天
+      const threeDaysAgoYear = threeDaysAgo.getFullYear();
+      const threeDaysAgoMonth = String(threeDaysAgo.getMonth() + 1).padStart(
+        2,
+        "0"
+      );
+      const threeDaysAgoDay = String(threeDaysAgo.getDate()).padStart(2, "0");
+      const threeDaysAgoString = `${threeDaysAgoYear}-${threeDaysAgoMonth}-${threeDaysAgoDay}`;
+
+      return [threeDaysAgoString, todayString]; // 返回 [前三天时间, 今天时间]
     },
     search() {
       this.currentPage = 1;
@@ -276,17 +370,27 @@ export default {
       });
     },
     async getDataList(obj) {
+      
       this.loading = true;
       let res = await getofficeFace(obj);
       if (res.re_code == 200) {
-        this.list = res.msg.data;
+        this.isIndeterminate = false;
+        this.checkAll = false;
+        this.list = res.msg.data.map((item) => {
+          return item.status === "upload"
+            ? item // 如果 status 为 'upload'，保持原样
+            : {
+                ...item, // 保留原有属性
+                checkStatus: false, // 新增 checkStatus 属性
+              };
+        });
         this.total = res.msg.total;
       }
       this.loading = false;
     },
   },
   mounted() {
-    this.filterData.time = this.getTodayRange();
+    this.filterData.time = this.getFirstThreeDays();
     this.getDataList({
       page: this.currentPage,
       page_size: this.pagesize,
@@ -300,13 +404,29 @@ export default {
 
 <style lang="scss" scoped>
 .Facial-Secondary-Review-box {
-
+  .contentbodybox-top-l {
+  width: 85%;
+    .tip {
+      margin-left: 10px;
+      display: flex;
+      align-items: center;
+      color: red;
+      font-weight: bold;
+    }
+  }
+  .contentbodybox-top-r {
+    width: 15%;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+  }
   .facebox {
     display: flex;
     align-items: center;
     justify-content: center;
     height: calc(100% - 100px);
     .imglist {
+      width: 100%;
       height: 99%;
       display: flex;
       flex-wrap: wrap; /* 启用换行 */
@@ -325,9 +445,11 @@ export default {
         display: flex;
         align-items: center;
         flex-direction: column;
-        padding: 20px 5px 10px 5px;
+        align-items: flex-start;
+        padding: 0px 5px 10px 5px;
         box-sizing: border-box;
         .imgBox {
+          min-height: 118px;
           height: 118px;
           width: 100%;
           border: 0.7px dashed rgba(24, 144, 255, 0.78);
@@ -336,6 +458,7 @@ export default {
           align-items: center;
           justify-content: center;
           img {
+            cursor: pointer;
             width: 100%;
             height: 100%;
             object-fit: contain;
@@ -384,7 +507,7 @@ export default {
     }
   }
 }
-.viewerPostion{
+.viewerPostion {
   position: relative;
 }
 </style>
