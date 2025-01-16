@@ -203,6 +203,7 @@ export default {
         nowImgIndex: index,
         imgList: urlList,
         dataList: this.list,
+        type:"",
         onupload: (data) => {
           this.Openupload(data.dataUrl);
         },
@@ -214,7 +215,7 @@ export default {
 
     closePreview() {
       this.$store.commit("SET_VISIBLE", false);
-    },
+    },  
     // 多选上传
     uploadAll() {
       let filterArr = this.list.filter((item) => item.checkStatus === true);

@@ -6,11 +6,7 @@
         <div class="face-top-left">
           <div class="selectimage">
             <div class="selectimage-imgbox">
-              <div
-                v-if="!imageurl"
-                id="notReplicable"
-                class="uploadimg"
-              >
+              <div v-if="!imageurl" id="notReplicable" class="uploadimg">
                 <span>+</span>
                 <img src="../../../public/头像.png" alt="" />
                 <span>人脸</span>
@@ -24,7 +20,12 @@
                 />
               </div>
               <div v-else class="Faceimage">
-                <el-image :src="imageurl" fit="contain" :preview-src-list="ImgList"> </el-image>
+                <el-image
+                  :src="imageurl"
+                  fit="contain"
+                  :preview-src-list="ImgList"
+                >
+                </el-image>
                 <el-icon @click="imageurl = ''"><Delete /></el-icon>
               </div>
             </div>
@@ -103,7 +104,6 @@
 </template>
 
 <script>
-
 import { ImageAnalyze, getanalyzeType } from "@/api/api";
 export default {
   data() {
@@ -125,7 +125,6 @@ export default {
       suggestions: [],
       resultData: null,
       isThrottled: false,
-      
     };
   },
   methods: {
@@ -134,10 +133,8 @@ export default {
         cb([]); // 如果输入为空，返回空数组
         return;
       }
-
       try {
         const response = await getanalyzeType({ type: queryString });
-
         if (response?.re_code === 200 && Array.isArray(response.msg)) {
           this.suggestions = response.msg.map((item) => ({
             value: item.name, // 显示的值
@@ -170,13 +167,13 @@ export default {
         reader.readAsDataURL(_fileObj);
         reader.onload = (e) => {
           this.imageurl = e.target.result;
-          this.ImgList[0]=this.imageurl
+          this.ImgList[0] = this.imageurl;
         };
       }
     },
 
     submit() {
-      this.$refs.alertForm.validate((valid) => {
+      this.$refs.alertForm.validate(async (valid) => {
         if (valid) {
           if (this.isThrottled) {
             return;
@@ -184,23 +181,27 @@ export default {
           // 设置节流状态为true
           this.isThrottled = true;
 
-          ImageAnalyze({
-            img: this.imageurl,
-            type: this.ruleForm.type,
-            api_id: this.ruleForm.api_id,
-            id: this.ruleForm.id,
-            phone: this.ruleForm.phone,
-            name: this.ruleForm.name,
-            dob: this.ruleForm.dob,
-            pob: this.ruleForm.pob,
-            country: this.ruleForm.country,
-          }).then((res) => {
-            console.log(res);
-            if (res.re_code == 200) {
+          try {
+            let imageRes = await ImageAnalyze({
+              img: this.imageurl,
+              type: this.ruleForm.type,
+              api_id: this.ruleForm.api_id,
+              id: this.ruleForm.id,
+              phone: this.ruleForm.phone,
+              name: this.ruleForm.name,
+              dob: this.ruleForm.dob,
+              pob: this.ruleForm.pob,
+              country: this.ruleForm.country,
+            });
+            if (imageRes.re_code == 200) {
               this.isThrottled = false;
-              this.resultData = JSON.stringify(res.msg);
+              this.resultData = JSON.stringify(imageRes.msg);
+            } else {
+              this.isThrottled = false;
             }
-          });
+          } catch (error) {
+            this.isThrottled = false;
+          }
         }
       });
     },

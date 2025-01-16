@@ -275,7 +275,6 @@ export default {
   methods: {
     show() {
       this.$store.commit("SET_VISIBLE", true);
-      // this.visible = true;
     },
     close(data) {
       this.initImg();
@@ -305,8 +304,6 @@ export default {
      * false 上一张
      */
     toogleImg(bool, way) {
-      console.log(bool, way);
-
       let fromIndex = this.imgIndex;
       if (bool) {
         this.nowImgIndex++;

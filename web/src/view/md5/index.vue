@@ -10,6 +10,7 @@
             <el-col :span="8">
               <el-button
                 @click="handleDecrypt('mx_phone', mx_phone)"
+                :disabled="mx_phone?false:true"
                 type="primary"
               >
                 解码
@@ -27,7 +28,7 @@
               <el-input v-model="id_phone" placeholder="id_phone Value" />
             </el-col>
             <el-col :span="8">
-              <el-button @click="handleDecrypt('id_phone', id_phone)" type="primary">
+              <el-button :disabled="id_phone?false:true" @click="handleDecrypt('id_phone', id_phone)" type="primary">
                 解码
               </el-button>
             </el-col>
@@ -44,6 +45,7 @@
             </el-col>
             <el-col :span="8">
               <el-button
+              :disabled="id_ktp?false:true"
                 @click="handleDecrypt('id_ktp', id_ktp)"
                 type="primary"
               >
