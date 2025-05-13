@@ -57,14 +57,14 @@
             placement="bottom"
             trigger="click"
             width="160"
-            :ref="`downFileCode${scope.row.date}`"
+            :ref="`downFileCode${scope.row.id}`"
           >
             <p>确定要下载文件吗</p>
             <div style="text-align: right; margin: 0">
               <el-button
                 size="small"
                 text
-                @click="$refs[`downFileCode${scope.row.date}`].hide()"
+                @click="$refs[`downFileCode${scope.row.id}`].hide()"
                 >取消</el-button
               >
               <el-button
@@ -296,7 +296,7 @@ export default {
         fileUrl = `https://data.abckyc.online/v1/test-task/download?id=${row.id}&token=${token}`;
       } else if (code === 2) {//2是下载文件
         fileUrl = `https://data.abckyc.online/v1/test-task/download-data?id=${row.id}&token=${token}`;
-        this.$refs[`downFileCode${row.date}`].hide();
+        this.$refs[`downFileCode${row.id}`].hide();
       }
       // 创建一个 <a> 标签
       const link = document.createElement("a");

@@ -114,7 +114,7 @@
         </li>
       </ul>
 
-      <el-empty :image-size="200" v-else />
+      <el-empty description="No data available at the moment" :image-size="200" v-else />
     </div>
     <div class="Pagination-box">
       <el-pagination

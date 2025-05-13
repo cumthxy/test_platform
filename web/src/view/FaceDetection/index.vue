@@ -145,7 +145,7 @@
         <pre class="preformatted-text">{{ formattedResult }}</pre>
       </div>
       <div v-else>
-        <el-empty :image-size="130" />
+        <el-empty description="description" :image-size="130" />
       </div>
     </div>
   </div>
@@ -313,7 +313,9 @@ export default {
           api_id: item.api_id,
         })); // 存储结果到本地变量
       }
-    } catch (error) {}
+    } catch (error) {
+
+    }
 
     getMd5Type().then((res) => {
       if (res.re_code == 200) {
