@@ -182,11 +182,21 @@ export function UploadOfficeFace(data) {
 // 官方人脸证件删除
 export function DelOfficeFace(data) {
     return request.request({
-        url: '/office-face/delete',
+        url: '/office-face/batch-delete',
         method: 'POST',
         data,
     });
 }
+
+// 官方人脸证件删除
+export function confirmOfficeFace(data) {
+    return request.request({
+        url: '/office-face/batch-confirm',
+        method: 'POST',
+        data,
+    });
+}
+
 
 // 假证确认列表接口
 export function getfakeIdcard(data) {
@@ -231,4 +241,22 @@ export function RiskfaceOperation(data) {
         method: 'POST',
         data,
     });
+}
+
+// 下载md5图片
+export function downMd5(data) {
+    return request.request({
+        url: '/image-analyze-md5download',
+        method: 'POST',
+        data
+    })
+}
+
+// 获取md5_type
+export function getMd5Type() {
+    return request.request({
+        url: '/image-analyze-md5type',
+        method: 'GET',
+  
+    })
 }

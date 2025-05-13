@@ -1,7 +1,7 @@
 <template>
   <div class="facedetectionBox">
     <div class="face-formbox">
-      <div class="face-title">验证表单</div>
+      <div class="face-title"></div>
       <div class="face-top">
         <div class="face-top-left">
           <div class="selectimage">
@@ -9,7 +9,7 @@
               <div v-if="!imageurl" id="notReplicable" class="uploadimg">
                 <span>+</span>
                 <img src="../../../public/头像.png" alt="" />
-                <span>人脸</span>
+                <span>图片</span>
                 <input
                   id="fileInput"
                   type="file"
@@ -38,6 +38,47 @@
               </ul>
             </div>
           </div>
+          <div class="md5download">
+            <div class="md5-title">MD5图片下载</div>
+            <el-form
+              ref="md5Form"
+              :model="md5Form"
+              :rules="md5rules"
+              :inline="true"
+            >
+              <el-form-item label="Img_md5" prop="img_md5">
+                <el-input
+                  v-model="md5Form.img_md5"
+                  placeholder="请输入img_md5"
+                  style="width: 250px"
+                />
+              </el-form-item>
+              <el-form-item label="Md5_type" prop="md5_type">
+                <el-select
+                  v-model="md5Form.md5_type"
+                  filterable
+                  placeholder="请选择md5_type"
+                  style="width: 250px"
+                >
+                  <el-option
+                    v-for="(item, index) in options"
+                    :key="item.value + index"
+                    :label="item.label"
+                    :value="item.value"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-form>
+            <div class="download-btn">
+              <el-button
+                size="small"
+                type="primary"
+                @click="downloadMd5Img"
+                :loading="isLoading"
+                >下载</el-button
+              >
+            </div>
+          </div>
         </div>
         <div class="face-top-right">
           <el-form
@@ -50,30 +91,37 @@
             status-icon
           >
             <el-form-item label="姓名" prop="name">
-              <el-input v-model="ruleForm.name" />
+              <el-input v-model="ruleForm.name" placeholder="请输入姓名" />
             </el-form-item>
             <el-form-item label="证件号" prop="id">
-              <el-input v-model="ruleForm.id" />
+              <el-input v-model="ruleForm.id" placeholder="请输入证件号" />
             </el-form-item>
             <el-form-item label="电话" prop="phone">
-              <el-input v-model="ruleForm.phone" />
+              <el-input v-model="ruleForm.phone" placeholder="请输入电话" />
             </el-form-item>
             <el-form-item label="类型" prop="type">
-              <el-autocomplete
+              <el-select
                 v-model="ruleForm.type"
-                :fetch-suggestions="querySearchType"
-                @select="handleSelect"
+                filterable
                 placeholder="请输入类型关键词"
-              />
+                @change="handleSelect"
+              >
+                <el-option
+                  v-for="(item, index) in suggestions"
+                  :key="item.value + index"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
             </el-form-item>
             <el-form-item label="Dob" prop="dob">
-              <el-input v-model="ruleForm.dob" />
+              <el-input v-model="ruleForm.dob" placeholder="请输入出生日期" />
             </el-form-item>
             <el-form-item label="Pob" prop="pob">
-              <el-input v-model="ruleForm.pob" />
+              <el-input v-model="ruleForm.pob" placeholder="请输入出生地" />
             </el-form-item>
             <el-form-item label="国家码(大写)" prop="country">
-              <el-input v-model="ruleForm.country" />
+              <el-input v-model="ruleForm.country" placeholder="请输入国家码" />
             </el-form-item>
           </el-form>
         </div>
@@ -104,12 +152,24 @@
 </template>
 
 <script>
-import { ImageAnalyze, getanalyzeType } from "@/api/api";
+import { ImageAnalyze, getanalyzeType, getMd5Type, downMd5 } from "@/api/api";
 export default {
   data() {
     return {
       imageurl: "",
       ImgList: [],
+      md5Form: {
+        img_md5: "",
+        md5_type: "",
+      },
+      md5rules: {
+        img_md5: [
+          { required: true, message: "请输入img_md5", trigger: "blur" },
+        ],
+        md5_type: [
+          { required: true, message: "请输入md5_type", trigger: "blur" },
+        ],
+      },
       ruleForm: {
         name: "",
         id: "",
@@ -122,38 +182,22 @@ export default {
       rules: {
         type: [{ required: true, message: "请输入type", trigger: "blur" }],
       },
-      suggestions: [],
+ 
       resultData: null,
       isThrottled: false,
+      isLoading: false,
+      options: [],
+      suggestions: [],
     };
-  },
+  },  
   methods: {
-    async querySearchType(queryString, cb) {
-      if (!queryString) {
-        cb([]); // 如果输入为空，返回空数组
-        return;
+    handleSelect(value) {
+      // 通过 value 在 suggestions 中查找对应对象
+      const selected = this.suggestions.find(item => item.value === value);
+      if (selected) {
+        this.ruleForm.type = selected.value;
+        this.ruleForm.api_id = selected.api_id;
       }
-      try {
-        const response = await getanalyzeType({ type: queryString });
-        if (response?.re_code === 200 && Array.isArray(response.msg)) {
-          this.suggestions = response.msg.map((item) => ({
-            value: item.name, // 显示的值
-            api_id: item.api_id,
-          })); // 存储结果到本地变量
-
-          cb(this.suggestions); // 回调设置为搜索结果
-        } else {
-          cb([]); // 如果接口返回异常，返回空数组
-        }
-      } catch (error) {
-        console.error("Error fetching suggestions:", error);
-        cb([]); // 如果请求失败，返回空数组
-      }
-    },
-    // 选择下拉框中的某一项
-    handleSelect(item) {
-      this.ruleForm.type = item.value; // 更新输入框的值
-      this.ruleForm.api_id = item.api_id; // 更新输入框的值
     },
 
     checkFile(e) {
@@ -180,7 +224,6 @@ export default {
           }
           // 设置节流状态为true
           this.isThrottled = true;
-
           try {
             let imageRes = await ImageAnalyze({
               img: this.imageurl,
@@ -218,6 +261,37 @@ export default {
         country: "",
       };
     },
+    downloadMd5Img() {
+      this.$refs.md5Form.validate(async (valid) => {
+        if (valid) {
+          if (this.isLoading) {
+            return;
+          }
+          // 设置节流状态为true
+          this.isLoading = true;
+          let res = await downMd5({
+            img_md5: this.md5Form.img_md5,
+            md5_type: this.md5Form.md5_type,
+          });
+          if (res.re_code === 200) {
+            // 创建一个临时的 a 标签用于下载
+            const link = document.createElement("a");
+            link.href = res.msg;
+            // 从 URL 中提取文件名，如果没有则使用默认名称
+            const fileName = res.msg.split("/").pop() || "download";
+            link.download = fileName;
+            // 添加到文档中
+            document.body.appendChild(link);
+            // 触发点击
+            link.click();
+            // 清理 DOM
+            document.body.removeChild(link);
+            this.$message.success("下载成功");
+          }
+          this.isLoading = false;
+        }
+      });
+    },
   },
   computed: {
     formattedResult() {
@@ -229,6 +303,28 @@ export default {
       // 格式化 JSON
       return data ? JSON.stringify(data, null, 2) : "";
     },
+  },
+  async mounted() {
+    try {
+      const response = await getanalyzeType({});
+      if (response?.re_code === 200 && Array.isArray(response.msg)) {
+        this.suggestions = response.msg.map((item) => ({
+          value: item.name, // 显示的值
+          api_id: item.api_id,
+        })); // 存储结果到本地变量
+      }
+    } catch (error) {}
+
+    getMd5Type().then((res) => {
+      if (res.re_code == 200) {
+        this.options = res.msg.map((item) => {
+          return {
+            value: item,
+            label: item,
+          };
+        });
+      }
+    });
   },
 };
 </script>
@@ -250,15 +346,13 @@ export default {
       display: flex;
       padding: 20px;
       .face-top-left {
-        width: 50%;
+        width: 55%;
         border-right: 1px solid #e4e7ed;
         .selectimage {
           width: 100%;
-          height: 100%;
           display: flex;
           box-sizing: border-box;
           align-items: flex-start;
-          flex-direction: column;
           .selectimage-imgbox {
             width: 400px;
             height: 176px;
@@ -360,10 +454,11 @@ export default {
           .tips {
             width: 315px;
             height: 80px;
+            padding-top: 8px;
+            padding-left: 30px;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            justify-content: flex-end;
 
             div {
               font-size: 12px;
@@ -388,9 +483,43 @@ export default {
             }
           }
         }
+        .md5download {
+          margin-top: 20px;
+          display: flex;
+          flex-direction: column;
+          border-radius: 4px;
+          padding: 20px;
+
+          .md5-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e4e7ed;
+          }
+
+          :deep(.el-form) {
+            .el-form-item {
+              margin-right: 20px;
+              margin-bottom: 0;
+            }
+          }
+
+          .download-btn {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+            padding: 0 20px;
+            .el-button--small {
+              padding: 8px 14px;
+              border-radius: 6px;
+            }
+          }
+        }
       }
       .face-top-right {
-        width: 50%;
+        width: 45%;
         padding-left: 30px;
       }
     }

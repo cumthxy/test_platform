@@ -22,8 +22,9 @@
           <el-icon>
             <component :is="menu.meta.icon" />
           </el-icon>
-          <span>{{ menu.meta.title }}</span>
+          <template #title>{{ menu.meta.title }}</template>
         </el-menu-item>
+        
       </div>
     </div>
 
@@ -48,9 +49,14 @@
               {{ item }}
             </el-breadcrumb-item>
           </el-breadcrumb>
-          <el-button @click="Notice.status = true"
+          <div class="title-btn">
+            <el-button @click="Notice.status = true"
             ><el-icon><Flag /></el-icon>公告</el-button
           >
+          <el-button @click="logout"
+            >退出登录</el-button
+          >
+          </div>
         </div>
         <router-view />
       </div>
@@ -80,6 +86,12 @@ export default {
       },
       menuRoutes: [],
     };
+  },
+  methods: {
+    logout() {
+      localStorage.removeItem("token");
+      this.$router.push("/login");
+    },
   },
   mounted() {
     const layoutRoute = staticRoute.find((route) => route.path === "/layout");
@@ -113,8 +125,7 @@ export default {
   .title {
     font-weight: bolder;
   }
-
-  > div:nth-child(2) {
+  .title-btn {
     .el-button {
       background-color: #f5f7f9;
       color: #4370ca;

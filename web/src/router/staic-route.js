@@ -10,6 +10,7 @@ export const staticRoute = [
     children: [
       {
         path: "",
+        name: "layout-default",
         redirect: '/layout/Task',
       },
       {

@@ -17,6 +17,9 @@ export default defineConfig(({ mode }) => {
     define: {
       // 通过 define 来将环境变量定义为全局常量
       'process.env': env,
+    },
+    server: {
+      host: '0.0.0.0', // 允许局域网访问
     }
   };
 });

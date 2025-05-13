@@ -56,7 +56,6 @@
 }
 
 .el-menu-vertical-demo {
-  overflow: hidden;
   height: 100vh;
   display: flex;
   flex-direction: column;

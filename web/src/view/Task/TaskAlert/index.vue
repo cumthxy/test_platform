@@ -140,27 +140,6 @@ export default {
     };
   },
   methods: {
-    async handleUpload(file) {
-      //限制大小
-      let fileSize = Number(file.file.size / 1024 / 1024);
-      if (fileSize > 5) {
-        this.$msgbox({
-          title: "",
-          message: "文件大小不能超过5MB,请重新上传。",
-          type: "warning",
-        });
-      }
-      const formData = new FormData();
-      try {
-        formData.append("file", file.file);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        this.$refs.upload.clearFiles();
-        this.Uploadstatus = false;
-      }
-      return false; // 这会阻止默认的上传行为
-    },
     handleExceed(files) {
       const upload = this.$refs.uploadRef;
       // 清除文件

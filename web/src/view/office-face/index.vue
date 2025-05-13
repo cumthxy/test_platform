@@ -13,6 +13,7 @@
           placeholder="Status"
           style="width: 240px"
           v-model="filterData.status"
+          @change="statusChange"
         >
           <el-option
             v-for="item in option"
@@ -33,18 +34,30 @@
           :indeterminate="isIndeterminate"
           @change="CheckAllChange"
         />
-        <el-button @click="uploadAll">Upload</el-button>
+        <div class="button-box">
+          <el-button
+            v-if="
+              filterData.status == 'pending' || filterData.status == 'delete'
+            "
+            @click="uploadArr"
+            >Upload</el-button
+          >
+          <el-button v-if="filterData.status == 'upload'" @click="confirmArr"
+            >Confirm</el-button
+          >
+          <el-button
+            v-if="filterData.status != 'delete'"
+            type="danger"
+            @click="deleteArr"
+            >Delete</el-button
+          >
+        </div>
       </div>
     </div>
     <div class="facebox" v-loading="loading">
       <ul class="imglist" v-if="list.length > 0">
         <li v-for="(item, index) in list" :key="item.id" class="infoBox">
-          <el-checkbox
-            v-if="item.status != 'upload'"
-            v-model="item.checkStatus"
-            size="large"
-          />
-          <div v-else style="height: 20px"></div>
+          <el-checkbox v-model="item.checkStatus" size="large" />
           <div class="infoTextBox">
             <div class="info-l">
               <span>CreateTime</span>
@@ -61,22 +74,33 @@
             <img
               alt=""
               v-if="item.image_url == ''"
+              :key="'empty-' + item.id"
               src="../../../public/头像.png"
             />
             <img
               alt=""
               v-else
+              :key="item.image_url + '-' + item.id"
               :src="item.image_url"
               @click="openPreview(index)"
             />
           </div>
-          <div class="buttonBox" v-if="item.status != 'upload'">
+          <div class="buttonBox">
             <el-button
-              type="primary"  
+              type="primary"
               plain
               size="small"
+              v-if="item.status == 'pending' || item.status == 'delete'"
               @click="Openupload(item)"
               >Upload</el-button
+            >
+            <el-button
+              type="primary"
+              plain
+              size="small"
+              v-if="item.status == 'upload'"
+              @click="OpenConfirm(item)"
+              >Confirm</el-button
             >
             <el-button
               type="danger"
@@ -104,34 +128,22 @@
       >
       </el-pagination>
     </div>
-    <el-dialog v-model="UploadAlertStatus" title="Upload Tips" width="400">
-      <span>Are you sure to upload?</span>
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="400"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
+      <span>{{ dialogContent }}</span>
       <template #footer>
         <div class="dialog-footer">
-          <el-button size="small" @click="UploadAlertStatus = false"
-            >No</el-button
-          >
+          <el-button size="small" @click="handleCancel">No</el-button>
           <el-button
             size="small"
             type="primary"
             :loading="buttonLoad"
-            @click="Upload"
-          >
-            Yes
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
-    <el-dialog v-model="DelAlertStatus" title="Delete Tips" width="400">
-      <span>Are you sure to delete?</span>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button size="small" @click="DelAlertStatus = false">No</el-button>
-          <el-button
-            size="small"
-            type="primary"
-            :loading="buttonLoad"
-            @click="DelData"
+            @click="handleConfirm"
           >
             Yes
           </el-button>
@@ -142,7 +154,12 @@
 </template>
 
 <script>
-import { getofficeFace, UploadOfficeFace, DelOfficeFace } from "@/api/api.js";
+import {
+  getofficeFace,
+  UploadOfficeFace,
+  DelOfficeFace,
+  confirmOfficeFace,
+} from "@/api/api.js";
 export default {
   data() {
     return {
@@ -161,9 +178,12 @@ export default {
         { value: "pending", label: "pending" },
         { value: "upload", label: "upload" },
         { value: "delete", label: "delete" },
+        { value: "final_state", label: "final_state" },
       ],
-      UploadAlertStatus: false,
-      DelAlertStatus: false,
+      dialogVisible: false,
+      dialogTitle: "",
+      dialogContent: "",
+      dialogType: "", // 'upload', 'delete', 'confirm'
       buttonLoad: false,
       AlertDataArr: {}, //用于弹窗后的确定传参
       checkAll: false,
@@ -194,6 +214,9 @@ export default {
     },
   },
   methods: {
+    statusChange() {
+      this.search();
+    },
     openPreview(index) {
       let urlList = this.list.map((item, index) => {
         return item.image_url; // 添加唯一标识
@@ -203,7 +226,7 @@ export default {
         nowImgIndex: index,
         imgList: urlList,
         dataList: this.list,
-        type:"",
+        type: "",
         onupload: (data) => {
           this.Openupload(data.dataUrl);
         },
@@ -215,12 +238,8 @@ export default {
 
     closePreview() {
       this.$store.commit("SET_VISIBLE", false);
-    },  
-    // 多选上传
-    uploadAll() {
-      let filterArr = this.list.filter((item) => item.checkStatus === true);
-      this.Openupload(filterArr);
     },
+
     // 多选按钮
     CheckAllChange(val) {
       this.list.forEach((item) => {
@@ -230,24 +249,77 @@ export default {
         }
       });
     },
-    // 上传
-    Openupload(data) {
-      if (Array.isArray(data)) {
-        this.AlertDataArr = data; // 如果是数组，直接赋值
-      } else {
-        this.AlertDataArr = [data]; // 如果不是数组，将其包装成数组
+
+    // 打开弹窗
+    openDialog(type, data) {
+      this.dialogType = type;
+      this.AlertDataArr = Array.isArray(data) ? data : [data];
+
+      switch (type) {
+        case "upload":
+          this.dialogTitle = "Upload Tips";
+          this.dialogContent = "Are you sure to upload?";
+          break;
+        case "delete":
+          this.dialogTitle = "Delete Tips";
+          this.dialogContent = "Are you sure to delete?";
+          break;
+        case "confirm":
+          this.dialogTitle = "Confirm Tips";
+          this.dialogContent = "Are you sure to confirm?";
+          break;
       }
-      this.UploadAlertStatus = true;
+
+      this.dialogVisible = true;
+    },
+
+    // 取消操作
+    handleCancel() {
+      this.dialogVisible = false;
+      this.buttonLoad = false;
+    },
+
+    // 确认操作
+    handleConfirm() {
+      switch (this.dialogType) {
+        case "upload":
+          this.Upload();
+          break;
+        case "delete":
+          this.DelData();
+          break;
+        case "confirm":
+          this.confirmData();
+          break;
+      }
+    },
+
+    // 多选上传
+    uploadArr() {
+      let filterArr = this.list.filter((item) => item.checkStatus === true);
+      this.Openupload(filterArr);
+    },
+    // 修改原有的方法调用
+    Openupload(data) {
+      this.openDialog("upload", data);
+    },
+
+    deleteArr() {
+      let filterArr = this.list.filter((item) => item.checkStatus === true);
+      this.Opendelete(filterArr);
     },
     //删除
     Opendelete(data) {
-      if (Array.isArray(data)) {
-        this.AlertDataArr = data; // 如果是数组，直接赋值
-      } else {
-        this.AlertDataArr = [data]; // 如果不是数组，将其包装成数组
-      }
-      this.DelAlertStatus = true;
+      this.openDialog("delete", data);
     },
+    confirmArr() {
+      let filterArr = this.list.filter((item) => item.checkStatus === true);
+      this.OpenConfirm(filterArr);
+    },
+    OpenConfirm(data) {
+      this.openDialog("confirm", data);
+    },
+
     Upload() {
       this.buttonLoad = true;
       let arr = this.AlertDataArr.map((item) => {
@@ -274,7 +346,7 @@ export default {
               }
             });
 
-            this.UploadAlertStatus = false;
+            this.dialogVisible = false;
             this.buttonLoad = false;
             this.closePreview();
           }
@@ -286,26 +358,65 @@ export default {
         });
     },
     DelData() {
+      
       this.buttonLoad = true;
+      let arr = this.AlertDataArr.map((item) => {
+        return {
+          image_id: item.image_id,
+          image_md5: item.image_md5,
+          nik: item.nik,
+        };
+      });
       DelOfficeFace({
-        image_id: this.AlertDataArr[0].image_id,
-        image_md5: this.AlertDataArr[0].image_md5,
-        nik: this.AlertDataArr[0].nik,
+        bacth_list: arr,
+        delete_status: this.filterData.status,
       }).then((res) => {
         if (res.re_code == 200) {
           this.$message.success(res.msg);
-          const index = this.list.findIndex(
-            (item) => item.image_id === this.AlertDataArr[0].image_id
-          );
-          if (index !== -1) {
-            this.list.splice(index, 1);
-          }
+          arr.forEach((item) => {
+            const index = this.list.findIndex(
+              (listItem) => listItem.image_id === item.image_id
+            );
+            if (index !== -1) {
+              this.list.splice(index, 1);
+            }
+          });
           this.closePreview();
-          this.DelAlertStatus = false;
+          this.dialogVisible = false;
           this.buttonLoad = false;
         }
       });
     },
+    confirmData() {
+      this.buttonLoad = true;
+      let arr = this.AlertDataArr.map((item) => {
+        return {
+          image_id: item.image_id,
+          image_md5: item.image_md5,
+          nik: item.nik,
+        };
+      });
+      confirmOfficeFace({
+        bacth_list: arr,
+      }).then((res) => {
+        if (res.re_code == 200) {
+          this.$message.success(res.msg);
+          // 遍历 arr，逐个删除 this.list 中对应的项
+          arr.forEach((item) => {
+            const index = this.list.findIndex(
+              (listItem) => listItem.image_id === item.image_id
+            );
+            if (index !== -1) {
+              this.list.splice(index, 1);
+            }
+          });
+
+          this.dialogVisible = false;
+          this.buttonLoad = false;
+        }
+      });
+    },
+
     handleCurrentChange(val) {
       this.currentPage = val;
       this.getDataList({
@@ -349,7 +460,7 @@ export default {
 
       // 获取前三天的日期
       const threeDaysAgo = new Date();
-      threeDaysAgo.setDate(today.getDate() - 3); // 设置为前三天
+      threeDaysAgo.setDate(today.getDate() - 30); // 设置为前三天
       const threeDaysAgoYear = threeDaysAgo.getFullYear();
       const threeDaysAgoMonth = String(threeDaysAgo.getMonth() + 1).padStart(
         2,
@@ -371,19 +482,16 @@ export default {
       });
     },
     async getDataList(obj) {
-      
       this.loading = true;
       let res = await getofficeFace(obj);
       if (res.re_code == 200) {
         this.isIndeterminate = false;
         this.checkAll = false;
         this.list = res.msg.data.map((item) => {
-          return item.status === "upload"
-            ? item // 如果 status 为 'upload'，保持原样
-            : {
-                ...item, // 保留原有属性
-                checkStatus: false, // 新增 checkStatus 属性
-              };
+          return {
+            ...item,
+            checkStatus: false,
+          };
         });
         this.total = res.msg.total;
       }
@@ -406,7 +514,7 @@ export default {
 <style lang="scss" scoped>
 .Facial-Secondary-Review-box {
   .contentbodybox-top-l {
-  width: 85%;
+    width: 75%;
     .tip {
       margin-left: 10px;
       display: flex;
@@ -416,10 +524,13 @@ export default {
     }
   }
   .contentbodybox-top-r {
-    width: 15%;
+    width: 20%;
     display: flex;
     align-items: center;
-    justify-content: space-around;
+    justify-content: flex-end;
+    .button-box {
+      margin-left: 20px;
+    }
   }
   .facebox {
     display: flex;
@@ -491,10 +602,13 @@ export default {
           }
           .info-r {
             .upload {
-              color: #81bf49;
+              color: #40a9ff;
             }
             .delete {
               color: #e17470;
+            }
+            .final_state {
+              color: #81bf49;
             }
           }
         }
