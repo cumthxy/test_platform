@@ -1,22 +1,22 @@
 <template>
   <div class="facedetectionBox">
     <div class="face-formbox">
-      <div class="face-title"></div>
       <div class="face-top">
         <div class="face-top-left">
           <div class="selectimage">
+            <!-- 图片1 -->
             <div class="selectimage-imgbox">
               <div v-if="!imageurl" id="notReplicable" class="uploadimg">
                 <span>+</span>
                 <img src="../../../public/头像.png" alt="" />
-                <span>图片</span>
+                <span>图片1</span>
                 <input
                   id="fileInput"
                   type="file"
                   ref="uploadimg"
                   accept="image/png,image/jpeg,image/ipg,image"
                   name="uploadinput"
-                  @change="checkFile($event)"
+                  @change="checkFile($event, 1)"
                 />
               </div>
               <div v-else class="Faceimage">
@@ -29,13 +29,38 @@
                 <el-icon @click="imageurl = ''"><Delete /></el-icon>
               </div>
             </div>
-            <div class="tips">
+            <!-- <div class="tips">
               <div>支持的文件:</div>
               <ul>
                 <li>* PNG和JPEG图像.</li>
                 <li>* 像素尺寸大于128x128的图像.</li>
                 <li>* 小于2MB的文件.</li>
               </ul>
+            </div> -->
+            <!-- 图片2 -->
+            <div class="selectimage-imgbox" style="margin-left: 20px">
+              <div v-if="!imageurl2" id="notReplicable" class="uploadimg">
+                <span>+</span>
+                <img src="../../../public/头像.png" alt="" />
+                <span>图片2</span>
+                <input
+                  id="fileInput"
+                  type="file"
+                  ref="uploadimg"
+                  accept="image/png,image/jpeg,image/ipg,image"
+                  name="uploadinput"
+                  @change="checkFile($event, 2)"
+                />
+              </div>
+              <div v-else class="Faceimage">
+                <el-image
+                  :src="imageurl2"
+                  fit="contain"
+                  :preview-src-list="ImgList2"
+                >
+                </el-image>
+                <el-icon @click="imageurl2 = ''"><Delete /></el-icon>
+              </div>
             </div>
           </div>
           <div class="md5download">
@@ -157,7 +182,9 @@ export default {
   data() {
     return {
       imageurl: "",
+      imageurl2: "",
       ImgList: [],
+      ImgList2: [],
       md5Form: {
         img_md5: "",
         md5_type: "",
@@ -182,25 +209,25 @@ export default {
       rules: {
         type: [{ required: true, message: "请输入type", trigger: "blur" }],
       },
- 
+
       resultData: null,
       isThrottled: false,
       isLoading: false,
       options: [],
       suggestions: [],
     };
-  },  
+  },
   methods: {
     handleSelect(value) {
       // 通过 value 在 suggestions 中查找对应对象
-      const selected = this.suggestions.find(item => item.value === value);
+      const selected = this.suggestions.find((item) => item.value === value);
       if (selected) {
         this.ruleForm.type = selected.value;
         this.ruleForm.api_id = selected.api_id;
       }
     },
 
-    checkFile(e) {
+    checkFile(e, imgtype) {
       const _fileObj = e.target.files[0];
       // 尺寸大小报错
       if (_fileObj && _fileObj.size > 2 * 1024 * 1024) {
@@ -210,8 +237,13 @@ export default {
         const reader = new FileReader();
         reader.readAsDataURL(_fileObj);
         reader.onload = (e) => {
-          this.imageurl = e.target.result;
-          this.ImgList[0] = this.imageurl;
+          if (imgtype == 1) {
+            this.imageurl = e.target.result;
+            this.ImgList[0] = this.imageurl;
+          } else {
+            this.imageurl2 = e.target.result;
+            this.ImgList2[0] = this.imageurl2;
+          }
         };
       }
     },
@@ -226,7 +258,8 @@ export default {
           this.isThrottled = true;
           try {
             let imageRes = await ImageAnalyze({
-              img: this.imageurl,
+              img1: this.imageurl,
+              img2: this.imageurl2,
               type: this.ruleForm.type,
               api_id: this.ruleForm.api_id,
               id: this.ruleForm.id,
@@ -250,6 +283,7 @@ export default {
     },
     reset() {
       this.imageurl = "";
+      this.imageurl2 = "";
       this.resultData = null;
       this.ruleForm = {
         name: "",
@@ -313,9 +347,7 @@ export default {
           api_id: item.api_id,
         })); // 存储结果到本地变量
       }
-    } catch (error) {
-
-    }
+    } catch (error) {}
 
     getMd5Type().then((res) => {
       if (res.re_code == 200) {
@@ -347,9 +379,13 @@ export default {
     .face-top {
       display: flex;
       padding: 20px;
+      overflow-x: auto;
+      
       .face-top-left {
         width: 55%;
+        min-width: 900px; /* 给左侧设置一个足够大的最小宽度 */
         border-right: 1px solid #e4e7ed;
+        
         .selectimage {
           width: 100%;
           display: flex;
@@ -522,6 +558,7 @@ export default {
       }
       .face-top-right {
         width: 45%;
+        min-width: 400px; /* 给右侧也设置一个最小宽度 */
         padding-left: 30px;
       }
     }
