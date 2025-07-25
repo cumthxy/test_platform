@@ -332,7 +332,7 @@ export default {
     getDatalist(obj) {
       this.loading = true;
       getTasklist(obj).then((res) => {
-        if (res.re_code == 200) {
+        if (res&&res.re_code == 200) {
           this.tableData = res.msg.data;
           this.total = res.msg.total;
           this.loading = false;

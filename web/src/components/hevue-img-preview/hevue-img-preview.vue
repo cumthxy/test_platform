@@ -54,7 +54,7 @@
         <div
           class="arrow arrow-left heimgfont"
           @click.stop="toogleImg(false, 'btn')"
-          v-if="arrowBtn && multiple"
+          v-if="arrowBtn && multiple && imgIndex + 1 != 1"
         >
           &#xe620;
         </div>
@@ -62,7 +62,7 @@
         <div
           class="arrow arrow-right heimgfont"
           @click.stop="toogleImg(true, 'btn')"
-          v-if="arrowBtn && multiple"
+          v-if="arrowBtn && multiple && imgIndex + 1 != imgList.length"
         >
           &#xe60d;
         </div>
@@ -72,7 +72,7 @@
             <div
               class="he-control-btn heimgfont"
               @click.stop="toogleImg(false, 'btn')"
-              v-if="arrowBtn && multiple"
+              v-if="arrowBtn && multiple && imgIndex + 1 != 1"
             >
               &#xe620;
             </div>
@@ -80,7 +80,7 @@
             <div
               class="he-control-btn heimgfont"
               @click.stop="toogleImg(true, 'btn')"
-              v-if="arrowBtn && multiple"
+              v-if="arrowBtn && multiple && imgIndex + 1 != imgList.length"
             >
               &#xe60d;
             </div>
@@ -121,37 +121,8 @@
             <div class="he-control-btn heimgfont" @click.stop="downloadIamge">
               &#xe694;
             </div> -->
-            <template v-if="type == 'fake'">
-              <template v-if="dataList[nowImgIndex]?.status != 'no_fake'"> 
-                <div class="he-control-btn heimgfont"  v-if="dataList[nowImgIndex]?.status!= 'is_fake'">
-                  <svg
-                    @click="customDelete"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 1024 1024"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896m-55.808 536.384-99.52-99.584a38.4 38.4 0 1 0-54.336 54.336l126.72 126.72a38.272 38.272 0 0 0 54.336 0l262.4-262.464a38.4 38.4 0 1 0-54.272-54.336z"
-                    ></path>
-                  </svg>
-                </div>
-                <div class="he-control-btn heimgfont" >
-                  <svg
-                    @click="customUpload"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 1024 1024"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896m0 393.664L407.936 353.6a38.4 38.4 0 1 0-54.336 54.336L457.664 512 353.6 616.064a38.4 38.4 0 1 0 54.336 54.336L512 566.336 616.064 670.4a38.4 38.4 0 1 0 54.336-54.336L566.336 512 670.4 407.936a38.4 38.4 0 1 0-54.336-54.336z"
-                    ></path>
-                  </svg>
-                </div>
-              </template>
-            </template>
-
             <!-- 添加自定义按钮 -->
-            <template v-else>
+            <template v-if="type != 'fake'">
               <template v-if="dataList[nowImgIndex]?.status != 'upload'">
                 <div class="he-control-btn heimgfont">
                   <svg
@@ -181,6 +152,27 @@
                   </svg>
                 </div>
               </template>
+              <!-- 选中/未选中切换按钮 -->
+              <div class="he-control-btn heimgfont">
+                <svg
+                  @click="toggleCheckStatus"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 1024 1024"
+                >
+                  <!-- 选中状态图标 -->
+                  <path
+                    v-if="dataList[nowImgIndex]?.checkStatus"
+                    fill="currentColor"
+                    d="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896m0 393.664L407.936 353.6a38.4 38.4 0 1 0-54.336 54.336L457.664 512 353.6 616.064a38.4 38.4 0 1 0 54.336 54.336L512 566.336 616.064 670.4a38.4 38.4 0 1 0 54.336-54.336L566.336 512 670.4 407.936a38.4 38.4 0 1 0-54.336-54.336z"
+                  ></path>
+                  <!-- 未选中状态图标 -->
+                  <path
+                    v-else
+                    fill="currentColor"
+                    d="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896m-55.808 536.384-99.52-99.584a38.4 38.4 0 1 0-54.336 54.336l126.72 126.72a38.272 38.272 0 0 0 54.336 0l262.4-262.464a38.4 38.4 0 1 0-54.272-54.336z"
+                  ></path>
+                </svg>
+              </div>
             </template>
           </div>
         </div>
@@ -233,6 +225,12 @@ export default {
   },
   mounted() {
     this.initImg();
+    // 将自动切换方法暴露到全局，供外部调用
+    window.triggerImgPreviewNext = this.autoNextAfterUpload;
+  },
+  beforeUnmount() {
+    // 移除全局方法
+    delete window.triggerImgPreviewNext;
   },
   watch: {
     url() {
@@ -575,12 +573,50 @@ export default {
         this.onupload({ dataUrl: this.dataList[this.nowImgIndex] });
       }
     },
+    // 新增：上传成功后的回调方法
+    triggerUploadSuccess(data) {
+      // 如果传入了 onUploadSuccess 回调函数，则调用它
+      if (this.onUploadSuccess) {
+        this.onUploadSuccess(data);
+      }
+
+      // 上传成功后自动切换到下一张图片（如果不是最后一张）
+      this.autoNextAfterUpload();
+    },
+    // 新增：上传成功后自动切换到下一张图片
+    autoNextAfterUpload() {
+      // 重新获取最新的图片列表，确保与外部数据同步
+      if (this.dataList && this.dataList.length > 0) {
+        // 从 dataList 中重新构建 imgList
+        this.imgList = this.dataList.map(
+          (item) => item.image_url || item.url || item
+        );
+      }
+
+      // 检查是否还有下一张图片
+      if (this.multiple && this.imgIndex < this.imgList.length - 1) {
+        // 不是最后一张，切换到下一张
+        this.toogleImg(true, "upload-success");
+      } else if (this.multiple && this.imgIndex >= this.imgList.length - 1) {
+        // 是最后一张，可以选择关闭预览
+        this.$store.commit("SET_VISIBLE", false);
+      }
+    },
     // 自定义删除方法
     customDelete() {
-      console.log("触发删除逻辑");
       // 如果传入了 ondelete 回调函数，则调用它
       if (this.ondelete) {
         this.ondelete({ dataUrl: this.dataList[this.nowImgIndex] });
+      }
+    },
+    // 切换选中状态
+    toggleCheckStatus() {
+      if (this.dataList[this.nowImgIndex]) {
+        this.dataList[this.nowImgIndex].checkStatus =
+          !this.dataList[this.nowImgIndex].checkStatus;
+        if (this.multiple && this.imgIndex < this.imgList.length - 1) {
+          this.toogleImg(true, "upload-success");
+        }
       }
     },
   },

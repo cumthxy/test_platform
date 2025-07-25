@@ -121,7 +121,7 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         v-model:current-page="currentPage"
-        :page-sizes="[20, 30, 40]"
+        :page-sizes="[20,30,40,50,100]"
         :page-size="pagesize"
         layout="sizes, prev, pager, next"
         :total="total"
@@ -221,6 +221,7 @@ export default {
       let urlList = this.list.map((item, index) => {
         return item.image_url; // 添加唯一标识
       });
+      
       this.$hevueImgPreview({
         multiple: true,
         nowImgIndex: index,
@@ -232,6 +233,24 @@ export default {
         },
         ondelete: (data) => {
           this.Opendelete(data.dataUrl);
+        },
+        onUploadSuccess: (data) => {
+          // 获取当前图片索引
+          const currentIndex = this.currentIndex;
+          const totalImages = this.list.length;
+          
+          // 如果不是最后一张图片，自动切换到下一张
+          if (currentIndex < totalImages - 1) {
+            // 延迟一下再切换，确保上传操作完成
+            setTimeout(() => {
+              this.currentIndex = currentIndex + 1;
+              // 重新打开预览，显示下一张图片
+              this.openPreview(this.currentIndex);
+            }, 500);
+          } else {
+            console.log('已经是最后一张图片了');
+            // 可以选择关闭预览或显示提示
+          }
         },
       });
     },
@@ -254,7 +273,6 @@ export default {
     openDialog(type, data) {
       this.dialogType = type;
       this.AlertDataArr = Array.isArray(data) ? data : [data];
-
       switch (type) {
         case "upload":
           this.dialogTitle = "Upload Tips";
@@ -312,10 +330,12 @@ export default {
     Opendelete(data) {
       this.openDialog("delete", data);
     },
+    //上传表格
     confirmArr() {
       let filterArr = this.list.filter((item) => item.checkStatus === true);
       this.OpenConfirm(filterArr);
     },
+    //确认
     OpenConfirm(data) {
       this.openDialog("confirm", data);
     },
@@ -348,7 +368,17 @@ export default {
 
             this.dialogVisible = false;
             this.buttonLoad = false;
-            this.closePreview();
+            // this.closePreview();
+            
+            // 触发图片预览组件的自动切换方法
+            this.$emit('upload-success', { success: true, data: arr });
+            
+            // 直接调用图片预览组件的自动切换方法
+            // 由于无法直接访问组件实例，我们需要通过其他方式
+            // 方案：通过 window 对象存储一个全局函数
+            if (window.triggerImgPreviewNext) {
+              window.triggerImgPreviewNext();
+            }
           }
         })
         .catch((err) => {
@@ -358,7 +388,6 @@ export default {
         });
     },
     DelData() {
-      
       this.buttonLoad = true;
       let arr = this.AlertDataArr.map((item) => {
         return {
@@ -381,9 +410,17 @@ export default {
               this.list.splice(index, 1);
             }
           });
-          this.closePreview();
+        
           this.dialogVisible = false;
           this.buttonLoad = false;
+           // 触发图片预览组件的自动切换方法
+            this.$emit('upload-success', { success: true, data: arr });
+            // 直接调用图片预览组件的自动切换方法
+            // 由于无法直接访问组件实例，我们需要通过其他方式
+            // 方案：通过 window 对象存储一个全局函数
+            if (window.triggerImgPreviewNext) {
+              window.triggerImgPreviewNext();
+            }
         }
       });
     },
@@ -451,7 +488,6 @@ export default {
     },
     getFirstThreeDays() {
       const today = new Date();
-
       // 获取今天的日期
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -460,7 +496,7 @@ export default {
 
       // 获取前三天的日期
       const threeDaysAgo = new Date();
-      threeDaysAgo.setDate(today.getDate() - 30); // 设置为前三天
+      threeDaysAgo.setDate(today.getDate() - 3); // 设置为前三天
       const threeDaysAgoYear = threeDaysAgo.getFullYear();
       const threeDaysAgoMonth = String(threeDaysAgo.getMonth() + 1).padStart(
         2,
@@ -543,22 +579,22 @@ export default {
       display: flex;
       flex-wrap: wrap; /* 启用换行 */
       justify-content: flex-start; /* 左对齐 */
-      gap: 10px; /* 添加子元素间距，替代 margin */
+      gap: 20px; /* 增加间距 */
+      padding: 15px;
       overflow: auto;
       border: 1px solid #ebeef5;
       box-sizing: border-box;
 
       .infoBox {
-        flex: 0 0 calc((100% - 140px) / 5); /* 保证一行显示 5 个，减去 gap */
-        margin: 10px 10px 10px 10px;
+        flex: 0 0 calc((100% - 80px) / 5); /* 保证一行最多显示5个，考虑间距 */
+        min-width: 180px; /* 设置最小宽度，避免太窄 */
         max-height: 247px;
         box-shadow: 0 1px 10px 0 rgba(0, 0, 0, 0.17);
         border-radius: 3px;
         display: flex;
-        align-items: center;
         flex-direction: column;
         align-items: flex-start;
-        padding: 0px 5px 10px 5px;
+        padding: 5px 5px 10px 5px;
         box-sizing: border-box;
         .imgBox {
           min-height: 118px;

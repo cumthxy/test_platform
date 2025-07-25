@@ -27,13 +27,12 @@ request.interceptors.response.use(
     },
     (error) => {
         if (router.currentRoute.path !== '/login' && error.response && error.response.status === 401) {
+            ElMessage.error("登录已过期，请重新登录！");
             // 执行拦截操作，例如跳转到登录页面
             router.push("/login");
-        } else if (error.code === 'ECONNABORTED' && error.message.indexOf('timeout') !== -1) {
-            ElMessage.error("Request timed out!");
         }
-        // 其他错误
         else {
+            console.log(error.message);
             ElMessage.error(error.message || "An error occurred!");
         }
 

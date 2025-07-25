@@ -103,7 +103,9 @@ export default {
     }
     this.Notice.status = true;
     announcement().then((res) => {
-      this.Notice.text = res.msg.replace(/\n/g, "<br/>");
+      if (res && res.re_code == 200) {
+        this.Notice.text = res.msg.replace(/\n/g, "<br/>");
+      }
     });
   },
 };

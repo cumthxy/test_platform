@@ -50,7 +50,7 @@
           <div class="infoTextBox">
             <div class="info-l">
               <span>CreateTime</span>
-              <span>NIK</span>
+              <span>NIK</span>  
               <span>Status</span>
               <span>Reason</span>
             </div>
@@ -101,7 +101,7 @@
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         v-model:current-page="currentPage"
-        :page-sizes="[20, 30, 40]"
+        :page-sizes="[20, 30, 40,50]"
         :page-size="pagesize"
         layout="sizes, prev, pager, next"
         :total="total"
@@ -236,7 +236,6 @@ export default {
     },
 
     Operation() {
-      // this.buttonLoad = true;
       let arr = this.AlertDataArr.map((item) => {
         return {
           image_id: item.image_id,
@@ -389,24 +388,25 @@ export default {
       display: flex;
       flex-wrap: wrap; /* 启用换行 */
       justify-content: flex-start; /* 左对齐 */
-      gap: 10px; /* 添加子元素间距，替代 margin */
+      gap: 20px; /* 增加间距 */
+      padding: 15px;
       overflow: auto;
       border: 1px solid #ebeef5;
       box-sizing: border-box;
 
       .infoBox {
-        flex: 0 0 calc((100% - 140px) / 5); /* 保证一行显示 5 个，减去 gap */
-        margin: 10px 10px 10px 10px;
-        max-height: 267px;
+        flex: 0 0 calc((100% - 80px) / 5); /* 保证一行最多显示5个，考虑间距 */
+        min-width: 180px; /* 设置最小宽度，避免太窄 */
+        max-height: 247px;
         box-shadow: 0 1px 10px 0 rgba(0, 0, 0, 0.17);
         border-radius: 3px;
         display: flex;
-        align-items: center;
         flex-direction: column;
         align-items: flex-start;
-        padding: 0px 5px 10px 5px;
+        padding: 5px 5px 10px 5px;
         box-sizing: border-box;
         .imgBox {
+          min-height: 118px;
           height: 118px;
           width: 100%;
           border: 0.7px dashed rgba(24, 144, 255, 0.78);
@@ -467,7 +467,5 @@ export default {
     }
   }
 }
-.viewerPostion {
-  position: relative;
-}
+
 </style>

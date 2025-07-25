@@ -148,6 +148,9 @@
             <el-form-item label="国家码(大写)" prop="country">
               <el-input v-model="ruleForm.country" placeholder="请输入国家码" />
             </el-form-item>
+            <el-form-item label="ts" prop="ts">
+              <el-input v-model="ruleForm.ts" placeholder="格式为:20200512" />
+            </el-form-item>
           </el-form>
         </div>
       </div>
@@ -205,6 +208,7 @@ export default {
         dob: "",
         pob: "",
         country: "",
+        ts: "",
       },
       rules: {
         type: [{ required: true, message: "请输入type", trigger: "blur" }],
@@ -229,10 +233,6 @@ export default {
 
     checkFile(e, imgtype) {
       const _fileObj = e.target.files[0];
-      // 尺寸大小报错
-      if (_fileObj && _fileObj.size > 2 * 1024 * 1024) {
-        this.$message.warning("Picture size exceeds 2MB！");
-      } else {
         // 转为base64格式进行渲染
         const reader = new FileReader();
         reader.readAsDataURL(_fileObj);
@@ -245,7 +245,6 @@ export default {
             this.ImgList2[0] = this.imageurl2;
           }
         };
-      }
     },
 
     submit() {
@@ -268,6 +267,7 @@ export default {
               dob: this.ruleForm.dob,
               pob: this.ruleForm.pob,
               country: this.ruleForm.country,
+              ts: this.ruleForm.ts,
             });
             if (imageRes.re_code == 200) {
               this.isThrottled = false;
@@ -293,6 +293,7 @@ export default {
         dob: "",
         pob: "",
         country: "",
+        ts: "",
       };
     },
     downloadMd5Img() {
@@ -380,12 +381,12 @@ export default {
       display: flex;
       padding: 20px;
       overflow-x: auto;
-      
+
       .face-top-left {
         width: 55%;
         min-width: 900px; /* 给左侧设置一个足够大的最小宽度 */
         border-right: 1px solid #e4e7ed;
-        
+
         .selectimage {
           width: 100%;
           display: flex;
