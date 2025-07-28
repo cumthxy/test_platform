@@ -37,7 +37,7 @@
         <div class="button-box">
           <el-button
             v-if="
-              filterData.status == 'pending' || filterData.status == 'delete'
+              filterData.status == 'pending' || filterData.status == 'delete' || filterData.status == 'gemini_delete'
             "
             @click="uploadArr"
             >Upload</el-button
@@ -46,7 +46,7 @@
             >Confirm</el-button
           >
           <el-button
-            v-if="filterData.status != 'delete'"
+            v-if="filterData.status != '1'"
             type="danger"
             @click="deleteArr"
             >Delete</el-button
@@ -90,7 +90,7 @@
               type="primary"
               plain
               size="small"
-              v-if="item.status == 'pending' || item.status == 'delete'"
+              v-if="item.status == 'pending' || item.status == 'delete' || item.status == 'gemini_delete'"
               @click="Openupload(item)"
               >Upload</el-button
             >
@@ -178,7 +178,7 @@ export default {
         { value: "pending", label: "pending" },
         { value: "upload", label: "upload" },
         { value: "delete", label: "delete" },
-        { value: "final_state", label: "final_state" },
+        { value: "gemini_delete", label: "gemini_delete" },
       ],
       dialogVisible: false,
       dialogTitle: "",
@@ -394,6 +394,7 @@ export default {
           image_id: item.image_id,
           image_md5: item.image_md5,
           nik: item.nik,
+          status:item.status
         };
       });
       DelOfficeFace({
